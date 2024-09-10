@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sqlite3
 import datetime
 import requests
 from bs4 import BeautifulSoup
@@ -73,3 +74,13 @@ for key, value in THEATERS.items():
         grouped_movies[title][key] = screenings
 
 __import__('pprint').pprint(grouped_movies)
+
+connection = sqlite3.connect("screenings.db")
+cursor = connection.cursor()
+for title, screenings in grouped_movies.items():
+    for theater, theater_screenings in screenings.items():
+        for theater_screening in theater_screenings:
+            cursor.execute("INSERT INTO movies (title, theater, screening) VALUES (?, ?, ?)", (title, theater, theater_screening))
+
+connection.commit()
+connection.close()
