@@ -28,32 +28,36 @@ def get_theater_movies(theater_id, date):
     movies = soup.select('.component--cinema-list-item')
     return movies
 
-def get_movie_details(movie_element):
+def get_movie_details(movie_element, date):
     movie = {}
     title = movie_element.select('.block--title > a')[0]
     movie['title'] = title.text.strip()
-
     screenings = movie_element.select('.screening-start')
-    movie['screenings'] = [s.text.strip() for s in screenings]
-
+    movie['screenings'] = [str(date) + " " + s.text.strip() for s in screenings] # only hours display in html
     return movie
 
 def with_screenings(movies):
     return list(filter(lambda x: len(x.get('screenings')) > 0, movies))
 
-tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+dates = []
+for i in range(1, 7):
+    dates.append(datetime.date.today() + datetime.timedelta(days=i))
 
 grouped_movies = {} 
-for key, value in THEATERS.items():
-    movies_page = get_theater_movies(value, tomorrow)
-    movies = with_screenings([get_movie_details(movie_page) for movie_page in movies_page])
 
-    # group movies by title
-    # and add screenings in a list for each theater
-    for movie in movies:
-        if movie.get('title') in grouped_movies:
-            grouped_movies[movie.get('title')].append({ 'theater': key, 'screenings': movie.get('screenings') })
-        else:
-            grouped_movies[movie.get('title')] = [{ 'theater': key, 'screenings': movie.get('screenings') }]
+for date in dates:
+    for key, value in THEATERS.items():
+    # key = 'confluence'
+    # value = THEATERS.get(key)
+        movies_page = get_theater_movies(value, date)
+        movies = with_screenings([get_movie_details(movie_page, date) for movie_page in movies_page])
+
+        # group movies by title
+        # and add screenings in a list for each theater
+        for movie in movies:
+            if movie.get('title') in grouped_movies:
+                grouped_movies[movie.get('title')].append({ 'theater': key, 'screenings': movie.get('screenings') })
+            else:
+                grouped_movies[movie.get('title')] = [{ 'theater': key, 'screenings': movie.get('screenings') }]
 
 __import__('pprint').pprint(grouped_movies)
