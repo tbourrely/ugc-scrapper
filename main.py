@@ -39,25 +39,37 @@ def get_movie_details(movie_element, date):
 def with_screenings(movies):
     return list(filter(lambda x: len(x.get('screenings')) > 0, movies))
 
+def has_screening_for_theater(screenings, theater):
+    for screening in screenings:
+        if screening.get('theater') == theater:
+            return True
+    return False
+
 dates = []
 for i in range(1, 7):
     dates.append(datetime.date.today() + datetime.timedelta(days=i))
 
 grouped_movies = {} 
 
-for date in dates:
-    for key, value in THEATERS.items():
-    # key = 'confluence'
-    # value = THEATERS.get(key)
+for key, value in THEATERS.items():
+    theater_movies = {}
+    for date in dates:
         movies_page = get_theater_movies(value, date)
         movies = with_screenings([get_movie_details(movie_page, date) for movie_page in movies_page])
 
-        # group movies by title
-        # and add screenings in a list for each theater
         for movie in movies:
-            if movie.get('title') in grouped_movies:
-                grouped_movies[movie.get('title')].append({ 'theater': key, 'screenings': movie.get('screenings') })
+            if movie.get('title') in theater_movies:
+                theater_movies[movie.get('title')].extend(movie.get('screenings'))
             else:
-                grouped_movies[movie.get('title')] = [{ 'theater': key, 'screenings': movie.get('screenings') }]
+                theater_movies[movie.get('title')] = movie.get('screenings')
+
+    # flatten movies across all theaters
+    # movie 
+    # > theater
+    # > > screenings[]
+    for title, screenings in theater_movies.items():
+        if title not in grouped_movies:
+            grouped_movies[title] = {}
+        grouped_movies[title][key] = screenings
 
 __import__('pprint').pprint(grouped_movies)
