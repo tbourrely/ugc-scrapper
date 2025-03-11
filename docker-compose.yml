@@ -1,0 +1,12 @@
+services:
+  api:
+    environment:
+      DATABASE: /${DATABASE}
+    volumes:
+      - ${DATABASE}:/${DATABASE}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    ports:
+      - "3000:3000"
