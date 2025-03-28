@@ -5,13 +5,21 @@ CREATE TABLE theaters(
 );
 
 CREATE TABLE movies(
-    id INTEGER PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     title TEXT,
     grade FLOAT,
     synopsis TEXT,
-    screenings JSON,
-    FOREIGN KEY (theater_id) REFERENCES theaters(id) ON DELETE CASCADE
 );
+
+CREATE TABLE screenings (
+    id TEXT PRIMARY KEY
+    movie_id TEXT
+    theater_id TEXT
+    screenings_time JSON
+    due_date timestamp
+    FOREIGN KEY (theater_id) REFERENCES theaters(id) ON DELETE CASCADE
+    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE
+)
 
 INSERT INTO theaters (id, name, ugc_identifier) VALUES
     (NEWID(), 'confluence', 36),
