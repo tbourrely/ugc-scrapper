@@ -5,7 +5,6 @@ use axum::{
 use crate::http_agent::HttpAgent;
 use crate::scrapper::Scrapper;
 use serde::{Deserialize, Serialize};
-use crate::domain::Screening;
 use crate::repository::Repository;
 
 #[derive(Deserialize, Serialize, Debug)]

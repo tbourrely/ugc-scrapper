@@ -4,8 +4,6 @@ use chrono::NaiveDate;
 pub type Theater = i8;
 pub type Content = String;
 
-type DatesMap = HashMap<String, Vec<String>>;
-type MoviesMap = HashMap<String, DatesMap>;
 pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
 
 pub struct Movie {
