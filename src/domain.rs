@@ -1,7 +1,12 @@
+use std::collections::HashMap;
 use chrono::NaiveDate;
 
 pub type Theater = i8;
 pub type Content = String;
+
+type DatesMap = HashMap<String, Vec<String>>;
+type MoviesMap = HashMap<String, DatesMap>;
+pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
 
 pub struct Movie {
     pub title: String,
@@ -10,11 +15,11 @@ pub struct Movie {
 }
 
 impl Movie {
-    pub fn new() -> Self {
+    pub fn new(title: String, grade: f32, synopsis: String) -> Self {
         Movie {
-            title: "".to_string(),
-            grade: 0.0,
-            synopsis: "".to_string(),
+            title,
+            grade,
+            synopsis,
         }
     }
 }

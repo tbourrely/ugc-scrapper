@@ -14,5 +14,6 @@ dotenv = "0.15.0"
 include_dir = "0.7.4"
 lazy_static = "1.5.0"
 serde = { version = "1.0.219", features = ["derive"] }
-const_format="*"
 uuid = {version = "1.13.1", features = ["v4", "serde"]}
+reqwest = { version = "0.12.15", features = ["json"] }
+scraper = "0.23.1"
