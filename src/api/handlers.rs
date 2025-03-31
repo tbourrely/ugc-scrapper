@@ -26,10 +26,7 @@ pub async fn retrieve_movies_from_ugc(
 
     let screenings = Scrapper::scrap_screenings_from_ugc_html_page(pages_per_theaters_per_date);
 
-    Repository::save(screenings );
-    for screening in screenings.iter() {
-
-    }
+    Repository::save(screenings);
 
     let t: String = String::from("retrieve_movies_from_ugc");
     Ok(Json(t))
