@@ -3,9 +3,9 @@ use axum::{
     http::StatusCode,
 };
 use crate::http_agent::HttpAgent;
-use crate::scrapper::Scrapper;
+// use crate::scrapper::Scrapper;
 use serde::{Deserialize, Serialize};
-use crate::repository::Repository;
+// use crate::repository::Repository;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct UgcFilterPayload {
@@ -21,11 +21,14 @@ pub async fn retrieve_movies_from_ugc(
     let dates = HttpAgent::verify_or_set_default_dates(payload.dates).unwrap();
     let theaters = HttpAgent::verify_or_set_default_theaters(payload.theaters).unwrap();
 
-    let html_per_theaters_per_date = HttpAgent::get_html_from_theaters_per_dates(theaters, dates).await;
+    println!("theaters : {:?}", theaters);
+    println!("theaters : {:?}", dates);
 
-    let screenings = Scrapper::get_screenings_from_html(html_per_theaters_per_date);
-
-    Repository::save(screenings);
+    // let html_per_theaters_per_date = HttpAgent::get_html_from_theaters_per_dates(theaters, dates).await;
+    //
+    // let screenings = Scrapper::get_screenings_from_html(html_per_theaters_per_date);
+    //
+    // Repository::save(screenings);
 
     let t: String = String::from("retrieve_movies_from_ugc");
     Ok(Json(t))
