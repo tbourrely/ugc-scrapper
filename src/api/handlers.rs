@@ -21,9 +21,9 @@ pub async fn retrieve_movies_from_ugc(
     let dates = HttpAgent::verify_or_set_default_dates(payload.dates).unwrap();
     let theaters = HttpAgent::verify_or_set_default_theaters(payload.theaters).unwrap();
 
-    let pages_per_theaters_per_date = HttpAgent::get_theaters_html_pages_by_dates(theaters, dates).await;
+    let html_per_theaters_per_date = HttpAgent::get_html_from_theaters_per_dates(theaters, dates).await;
 
-    let screenings = Scrapper::scrap_screenings_from_ugc_html_page(pages_per_theaters_per_date);
+    let screenings = Scrapper::get_screenings_from_html(html_per_theaters_per_date);
 
     Repository::save(screenings);
 

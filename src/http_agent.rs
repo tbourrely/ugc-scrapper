@@ -47,7 +47,7 @@ impl HttpAgent {
         }
     }
 
-    pub async fn get_theaters_html_pages_by_dates(theaters: Vec<i8>, dates: Vec<NaiveDate>) -> TheatersHtmlMap {
+    pub async fn get_html_from_theaters_per_dates(theaters: Vec<i8>, dates: Vec<NaiveDate>) -> TheatersHtmlMap {
         let mut theaters_html_pages_by_dates: TheatersHtmlMap = HashMap::new();
         for theater in theaters.iter() {
             println!("{}", theater);

@@ -8,16 +8,14 @@ pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
 
 pub struct Movie {
     pub title: String,
-    pub grade: f32,
-    pub synopsis: String,
+    pub grade: f32
 }
 
 impl Movie {
-    pub fn new(title: String, grade: f32, synopsis: String) -> Self {
+    pub fn new(title: String, grade: f32) -> Self {
         Movie {
             title,
             grade,
-            synopsis,
         }
     }
 }
@@ -27,15 +25,17 @@ pub struct Screening {
     pub theater: Theater,
     pub movie: Movie,
     pub due_date: NaiveDate,
+    pub hours: Vec<String>
 }
 
 impl Screening {
-    pub fn new(theater: Theater, movie: Movie, due_date: NaiveDate) -> Self {
+    pub fn new(theater: Theater, movie: Movie, due_date: NaiveDate, hours: Vec<String>) -> Self {
         Screening {
             id: uuid::Uuid::new_v4(),
             theater,
             movie,
             due_date,
+            hours
         }
     }
 }
