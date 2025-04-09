@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
 };
 use crate::http_agent::HttpAgent;
-// use crate::scrapper::Scrapper;
+use crate::scrapper::Scrapper;
 use serde::{Deserialize, Serialize};
 // use crate::repository::Repository;
 
@@ -18,16 +18,30 @@ pub async fn retrieve_movies_from_ugc(
 ) -> Result<Json<String>, StatusCode> {
     println!("payload : {:?}", payload);
 
-    let dates = HttpAgent::verify_or_set_default_dates(payload.dates).unwrap();
-    let theaters = HttpAgent::verify_or_set_default_theaters(payload.theaters).unwrap();
+    let dates = match HttpAgent::verify_or_set_default_dates(payload.dates) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    };
+    let theaters = match HttpAgent::verify_or_set_default_theaters(payload.theaters) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(StatusCode::BAD_REQUEST);
+        }
+    };
 
     println!("theaters : {:?}", theaters);
     println!("theaters : {:?}", dates);
 
-    // let html_per_theaters_per_date = HttpAgent::get_html_from_theaters_per_dates(theaters, dates).await;
-    //
-    // let screenings = Scrapper::get_screenings_from_html(html_per_theaters_per_date);
-    //
+    let html_per_theaters_per_date = HttpAgent::get_html_from_theaters_per_dates(theaters, dates).await;
+
+    let screenings = Scrapper::get_screenings_from_html(html_per_theaters_per_date);
+
+    println!("{:?}", screenings);
+
     // Repository::save(screenings);
 
     let t: String = String::from("retrieve_movies_from_ugc");

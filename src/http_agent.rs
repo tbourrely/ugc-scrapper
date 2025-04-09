@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use crate::domain::{TheatersHtmlMap};
 use chrono::{NaiveDate, Utc, Datelike};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, HOST, USER_AGENT};
-use axum::http::StatusCode;
 
 const CONFLUENCE_THEATER: i8 = 36;
 const ASTORIA_THEATER: i8 = 33;
@@ -11,14 +10,20 @@ const CITE_INTERNATIONAL_THEATER: i8 = 32;
 
 pub struct HttpAgent {}
 impl HttpAgent {
-    pub fn verify_or_set_default_theaters(theaters_from_rq: Option<Vec<i8>>) -> Result<Vec<i8>, Vec<i8>> {
+    pub fn verify_or_set_default_theaters(theaters_from_rq: Option<Vec<i8>>) -> Result<Vec<i8>, String> {
+        let all_theaters = vec![CONFLUENCE_THEATER, ASTORIA_THEATER, PART_DIEU_THEATER, CITE_INTERNATIONAL_THEATER];
         match theaters_from_rq {
-            Some(inner)   => {
-                Ok(inner)
+            Some(theaters)   => {
+                for theater in theaters.iter() {
+                    if !all_theaters.contains(&theater) {
+                        return Err(String::from("An error occurred while trying to verify theaters."))
+                    }
+                }
+                Ok(theaters)
             },
             None => {
-                Ok(vec![CONFLUENCE_THEATER, ASTORIA_THEATER, PART_DIEU_THEATER, CITE_INTERNATIONAL_THEATER])
-            },
+                Ok(all_theaters)
+            }
         }
     }
 
@@ -28,11 +33,16 @@ impl HttpAgent {
                 let current_year = Utc::now().date_naive().year();
                 let mut dates = Vec::new();
                 for date in inner {
-                    let dt = NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap();
-                    if dt.year() != current_year {
-                        return Err(String::from("Date matched incorrect format"));
+                    let dt = NaiveDate::parse_from_str(&date, "%Y-%m-%d");
+                    match dt {
+                        Ok(_date) => (),
+                        Err(_date) => return Err(String::from("A date is malformed, valid format : %Y-%m-%d"))
                     }
-                    dates.push(dt);
+                    let valid_date = dt.unwrap();
+                    if valid_date.year() != current_year {
+                        return Err(String::from("A date is malformed, year must be current one or future"))
+                    }
+                    dates.push(valid_date);
                 }
                 Ok(dates)
             },
@@ -50,9 +60,7 @@ impl HttpAgent {
     pub async fn get_html_from_theaters_per_dates(theaters: Vec<i8>, dates: Vec<NaiveDate>) -> TheatersHtmlMap {
         let mut theaters_html_pages_by_dates: TheatersHtmlMap = HashMap::new();
         for theater in theaters.iter() {
-            println!("{}", theater);
             for date in dates.iter() {
-                println!("{}", date);
                 let mut html_by_date: HashMap<String, String> = HashMap::new();
 
                 let html_page = Self::get_ugc_screening_page_by_theater_by_date(theater, date).await.unwrap();
@@ -64,7 +72,7 @@ impl HttpAgent {
         theaters_html_pages_by_dates
     }
 
-    async fn get_ugc_screening_page_by_theater_by_date(theater: &i8, date: &NaiveDate) -> Result<String, Box<(StatusCode, String)>> {
+    async fn get_ugc_screening_page_by_theater_by_date(theater: &i8, date: &NaiveDate) -> Result<String, Box<dyn std::error::Error>> {
         let base_url = "https://www.ugc.fr/showingsCinemaAjaxAction!getShowingsForCinemaPage.action";
 
         let mut headers = HeaderMap::new();
@@ -73,43 +81,15 @@ impl HttpAgent {
         headers.insert(HOST, HeaderValue::from_static("www.ugc.fr"));
         headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"));
 
-        let client = reqwest::Client::new();
         let url = format!("{}?cinemaId={}&date={}", base_url, theater, date.to_string());
-        let response = match client.get(&url)
+        let client = reqwest::Client::new();
+        let response = client.get(&url)
             .headers(headers)
             .send()
-            .await {
-                Ok(resp) => resp,
-                Err(e) => {
-                    eprintln!("Erreur lors de l'envoi de la requête: {}", e);
-                    return Err(Box::new(
-                        (
-                            e.status().unwrap(),
-                            String::from("Error on UGC request")
-                        )
-                    ));
-                }
-            };
+            .await?
+            .text()
+            .await?;
 
-        if !response.status().is_success() {
-            return Err(Box::new((
-                response.status(),
-                String::from("Erreur lors de l'envoi de la requête vers UGC")
-            )))
-        }
-
-        let html_content = match response.text().await {
-            Ok(text) => text,
-            Err(e) => {
-                eprintln!("Erreur lors de la lecture de la réponse: {}", e);
-                return Err(Box::new(
-                    (
-                        e.status().unwrap(),
-                        String::from("Couldn't retrieve content of ugc request")
-                    )
-                ));
-            }
-        };
-        Ok(html_content)
+        Ok(response)
     }
 }

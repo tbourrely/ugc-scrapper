@@ -6,6 +6,7 @@ pub type Content = String;
 
 pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
 
+#[derive(Debug)]
 pub struct Movie {
     pub title: String,
     pub grade: f32
@@ -20,6 +21,7 @@ impl Movie {
     }
 }
 
+#[derive(Debug)]
 pub struct Screening {
     pub id: uuid::Uuid,
     pub theater: Theater,
