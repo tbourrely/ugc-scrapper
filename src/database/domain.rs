@@ -8,6 +8,7 @@ pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
 
 #[derive(Debug)]
 pub struct Movie {
+    pub id: uuid::Uuid,
     pub title: String,
     pub grade: f32
 }
@@ -15,6 +16,7 @@ pub struct Movie {
 impl Movie {
     pub fn new(title: String, grade: f32) -> Self {
         Movie {
+            id: uuid::Uuid::new_v4(),
             title,
             grade,
         }

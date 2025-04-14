@@ -1,12 +1,31 @@
 services:
   api:
-    environment:
-      DATABASE: /${DATABASE}
     volumes:
-      - ${DATABASE}:/${DATABASE}
+      - ./:/${DATABASE_NAME}
     build:
       context: .
       dockerfile: Dockerfile
       target: api
     ports:
       - "3000:3000"
+    networks:
+      - ugc-scrapper
+
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - ugc-scrapper
+
+networks:
+  ugc-scrapper:
+
+volumes:
+  db-data:

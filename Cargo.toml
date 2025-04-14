@@ -5,10 +5,7 @@ edition = "2024"
 
 [dependencies]
 axum = "0.8.1"
-chrono = "0.4.39"
-rusqlite = "0.32.1"
-rusqlite_migration = { version = "1.3.1", features = ["from-directory"] }
-async-sqlite = { version = "*", default-features = false }
+chrono = { version = "0.4.39", features = ["serde"] }
 tokio = { version = "1.42.0", features = ["full"] }
 dotenv = "0.15.0"
 include_dir = "0.7.4"
@@ -17,3 +14,8 @@ serde = { version = "1.0.219", features = ["derive"] }
 uuid = {version = "1.13.1", features = ["v4", "serde"]}
 reqwest = { version = "0.12.15", features = ["json"] }
 scraper = "0.23.1"
+sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-native-tls", "postgres", "uuid", "migrate", "json" ] }
+anyhow = "1.0.97"
+thiserror = "2.0.12"
+serde_with = { version = "3.12.0", features = ["time_0_3"] }
+validator = { version = "0.20.0", features = ["derive"] }

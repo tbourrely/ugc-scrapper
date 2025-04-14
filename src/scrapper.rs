@@ -1,6 +1,6 @@
-use crate::domain::{Movie, Screening, TheatersHtmlMap};
 use chrono::{NaiveDate};
 use scraper::{Html, Selector};
+use crate::database::domain::{Movie, Screening, TheatersHtmlMap};
 
 pub struct Scrapper {}
 impl Scrapper {
