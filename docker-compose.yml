@@ -1,0 +1,33 @@
+services:
+  api:
+    volumes:
+      - ./:/${DATABASE_NAME}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    ports:
+      - ${PORT_API}:3000
+    environment:
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      DISCORD_API_BASE_URL: ${DISCORD_API_BASE_URL}
+    depends_on:
+      - db
+    profiles: [production]
+
+  db:
+    image: postgres:16
+    restart: always
+    ports:
+      - ${PORT_DB}:5432
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    profiles: [production, dev]
+
+volumes:
+  pgdata:

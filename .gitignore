@@ -1,1 +1,8 @@
-screenings.db
+/target
+.env
+*.sqlite
+/.idea
+
+# venom files
+venom.*
+*.dump.json
