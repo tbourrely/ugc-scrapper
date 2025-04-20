@@ -1,16 +1,27 @@
 use std::collections::HashMap;
 use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 
-pub type Theater = i8;
-pub type Content = String;
+const CONFLUENCE_THEATER: i16 = 36;
+const ASTORIA_THEATER: i16 = 33;
+const PART_DIEU_THEATER: i16 = 58;
+const CITE_INTERNATIONAL_THEATER: i16 = 32;
+pub const LYON_THEATERS: [i16; 4] = [CONFLUENCE_THEATER, ASTORIA_THEATER, PART_DIEU_THEATER, CITE_INTERNATIONAL_THEATER];
 
-pub type TheatersHtmlMap = HashMap<i8, HashMap<String, String>>;
+pub type Theater = i16;
 
-#[derive(Debug)]
+pub type HtmlFromTheatersByDate = HashMap<i16, HashMap<String, String>>;
+
+pub type MovieTitle = String;
+
+pub type MoviesFromHtml = HashMap<MovieTitle, Movie>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Movie {
     pub id: uuid::Uuid,
     pub title: String,
-    pub grade: f32
+    pub grade: f32,
+    pub screenings: Vec<Screening>,
 }
 
 impl Movie {
@@ -19,25 +30,29 @@ impl Movie {
             id: uuid::Uuid::new_v4(),
             title,
             grade,
+            screenings: vec![],
         }
     }
 }
 
-#[derive(Debug)]
-pub struct Screening {
-    pub id: uuid::Uuid,
-    pub theater: Theater,
-    pub movie: Movie,
-    pub due_date: NaiveDate,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Hours {
     pub hours: Vec<String>
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Screening {
+    pub id: uuid::Uuid,
+    pub theater: Theater,
+    pub due_date: NaiveDate,
+    pub hours: Hours
+}
+
 impl Screening {
-    pub fn new(theater: Theater, movie: Movie, due_date: NaiveDate, hours: Vec<String>) -> Self {
+    pub fn new(theater: Theater, due_date: NaiveDate, hours: Hours) -> Self {
         Screening {
             id: uuid::Uuid::new_v4(),
             theater,
-            movie,
             due_date,
             hours
         }

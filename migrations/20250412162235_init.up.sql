@@ -3,24 +3,25 @@ CREATE TABLE theaters
 (
     id             UUID PRIMARY KEY,
     name           TEXT,
-    ugc_identifier NUMERIC(3, 0)
+    ugc_identifier INT2
 );
 
 CREATE TABLE movies
 (
     id       UUID PRIMARY KEY,
     title    TEXT UNIQUE NOT NULL,
-    grade    NUMERIC(2, 1),
-    synopsis TEXT,
+    grade    REAL,
+    synopsis TEXT
 );
 
 CREATE TABLE screenings
 (
-    id UUID PRIMARY KEY movie_id UUID
-    theater_id UUID
-    screenings_time JSON
-    due_date timestamp
-    FOREIGN KEY (theater_id) REFERENCES theaters(id) ON DELETE CASCADE
+    id UUID PRIMARY KEY,
+    movie_id UUID,
+    theater_id UUID,
+    screenings_time JSON,
+    due_date TEXT,
+    FOREIGN KEY (theater_id) REFERENCES theaters(id) ON DELETE CASCADE,
     FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE
 );
 

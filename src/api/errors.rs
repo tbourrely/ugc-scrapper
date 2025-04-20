@@ -2,6 +2,7 @@ use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use scraper::error::SelectorErrorKind;
 use serde::{Serialize};
 use validator::ValidationErrors;
 
@@ -13,6 +14,12 @@ pub enum Error {
     /// information about databse internals.
     #[error("an internal database error occurred")]
     Sqlx(#[from] sqlx::Error),
+
+    #[error("An error occurred while trying to retrieve movies from UGC")]
+    Reqwest(#[from] reqwest::Error),
+
+    #[error("An error occurred while parsing UGC page")]
+    Scrapper(#[from] SelectorErrorKind<'static>),
 
     /// Similarly, we don't want to report random `anyhow` errors to the user.
     #[error("an internal server error occurred")]
@@ -66,6 +73,7 @@ impl Error {
         match self {
             Sqlx(_) | Anyhow(_) => StatusCode::INTERNAL_SERVER_ERROR,
             InvalidEntity(_) | UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Reqwest(_) | Scrapper(_) => StatusCode::BAD_GATEWAY,
         }
     }
 }

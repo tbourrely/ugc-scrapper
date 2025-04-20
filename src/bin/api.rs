@@ -4,32 +4,28 @@ use dotenv::dotenv;
 use axum::{Extension, Router};
 use sqlx::postgres::PgPoolOptions;
 use ugc_scrapper::api::ugc_movies;
+use ugc_scrapper::migrations::init_db;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let database_url = get_database_url();
+    dotenv().ok();
+    let database = env::var("DATABASE_URL").expect("Expected DATABASE in the environment");
 
-    let pool = PgPoolOptions::new()
+    let mut pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&database_url)
+        .connect(&database)
         .await
         .context("failed to connect to DATABASE_URL")?;
+
+    init_db(&mut pool).await?;
 
     let app = Router::new()
         .merge(ugc_movies::router())
         .layer(Extension(pool));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let port_api = env::var("PORT_API").expect("Expected PORT_API in the environment");
+    let host = "0.0.0.0:".to_owned() + port_api.as_str();
+    let listener = tokio::net::TcpListener::bind(host).await?;
 
     axum::serve(listener, app).await.context("failed to serve API")
-}
-
-fn get_database_url() -> String {
-    dotenv().ok();
-
-    let database_name = env::var("DATABASE_NAME").expect("Expected DATABASE_NAME in the environment");
-    let database_username = env::var("DATABASE_USERNAME").expect("Expected DATABASE_USERNAME in the environment");
-    let database_password = env::var("DATABASE_PASSWORD").expect("Expected DATABASE_PASSWORD in the environment");
-
-    format!("postgres://{}:{}@db/{}", database_username, database_password, database_name)
 }
