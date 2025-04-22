@@ -1,6 +1,6 @@
 use sqlx::migrate::MigrateError;
-use sqlx::PgPool;
+use sqlx::{Pool, Postgres};
 
-pub async fn init_db(db: &mut PgPool) -> Result<(), MigrateError> {
-    Ok(sqlx::migrate!().run(&*db).await?)
+pub async fn init_db(db: &Pool<Postgres>) -> Result<(), MigrateError> {
+    Ok(sqlx::migrate!().run(db).await?)
 }

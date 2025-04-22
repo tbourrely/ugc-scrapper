@@ -1,20 +1,27 @@
 use std::collections::HashMap;
-use axum::Extension;
 use sqlx::{Error, PgPool, Row};
 use uuid::Uuid;
-use crate::database::domain::{Movie, MoviesFromHtml, LYON_THEATERS};
+use crate::database::domain::{Movie, MoviesFromHtml, Theater};
+use crate::utils::theaters;
 
-pub struct MoviesRepository {}
-impl MoviesRepository {
-    async fn resolve_theater_id (db: &mut Extension<PgPool>) -> Result<HashMap<i16, Uuid>, Error> {
-        let mut theaters_uuid: HashMap<i16, Uuid> = HashMap::new();
-        let lyon_theaters = LYON_THEATERS.to_vec();
+pub fn init_movie_repository(pool: &PgPool) -> MovieRepository {
+    MovieRepository { pool: &pool }
+}
+
+pub struct MovieRepository<'a> {
+    pub pool: &'a PgPool,
+}
+
+impl<'a> MovieRepository<'a> {
+    async fn resolve_theater_id (&self) -> Result<HashMap<Theater, Uuid>, Error> {
+        let mut theaters_uuid: HashMap<Theater, Uuid> = HashMap::new();
+        let lyon_theaters = theaters::get_lyon_theaters();
 
         let rows = sqlx::query(
             r#"SELECT id, ugc_identifier FROM theaters WHERE ugc_identifier = ANY($1)"#
         )
             .bind(&lyon_theaters[..])
-            .fetch_all(&**db)
+            .fetch_all(self.pool)
             .await?;
 
         for row in rows {
@@ -24,14 +31,14 @@ impl MoviesRepository {
         Ok(theaters_uuid)
     }
 
-    pub async fn get_existing_movies_by_titles(db: &mut Extension<PgPool>, movie_titles: Vec<String>) -> Result<HashMap<String, Uuid>, Error> {
+    pub async fn get_existing_movies_by_titles(&self, movie_titles: Vec<String>) -> Result<HashMap<String, Uuid>, Error> {
         let mut movie_uuid_by_title: HashMap<String, Uuid> = HashMap::new();
 
         let rows = sqlx::query(
             r#"SELECT id, title FROM movies WHERE title = ANY($1)"#
         )
             .bind(&movie_titles[..])
-            .fetch_all(&**db)
+            .fetch_all(self.pool)
             .await?;
 
         for row in rows {
@@ -41,12 +48,12 @@ impl MoviesRepository {
         Ok(movie_uuid_by_title)
     }
 
-    pub async fn save(mut db: Extension<PgPool>, movies: MoviesFromHtml) -> Result<Vec<Movie>, Error> {
+    pub async fn save(&self, movies: MoviesFromHtml) -> Result<Vec<Movie>, Error> {
         let mut movies_in_db: Vec<Movie> = Vec::new();
 
-        let theater_hash_map = MoviesRepository::resolve_theater_id(&mut db).await?;
+        let theater_hash_map = self.resolve_theater_id().await?;
 
-        let mut movie_uuid_by_title = MoviesRepository::get_existing_movies_by_titles(&mut db, movies.keys().cloned().collect()).await?;
+        let mut movie_uuid_by_title = self.get_existing_movies_by_titles(movies.keys().cloned().collect()).await?;
 
         let mut movie_uuids: Vec<Uuid> = Vec::new();
         let mut movie_titles: Vec<String> = Vec::new();
@@ -92,7 +99,7 @@ impl MoviesRepository {
         .bind(&movie_uuids[..])
         .bind(&movie_titles[..])
         .bind(&movie_grades[..])
-        .execute(&*db)
+        .execute(self.pool)
         .await?;
 
         sqlx::query(
@@ -106,7 +113,7 @@ impl MoviesRepository {
             .bind(&screening_theater_ids[..])
             .bind(&screening_hours[..])
             .bind(&screening_due_dates[..])
-            .execute(&*db)
+            .execute(self.pool)
             .await?;
 
         Ok(movies_in_db)

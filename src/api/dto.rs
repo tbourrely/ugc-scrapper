@@ -3,7 +3,8 @@ use chrono::{NaiveDate, Utc, Datelike, Weekday, Local, Duration};
 use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
-use crate::database::domain::LYON_THEATERS;
+use crate::database::domain::Theater;
+use crate::utils::theaters;
 use crate::services::discord::{Discord};
 
 #[derive(Debug)]
@@ -15,7 +16,7 @@ pub struct UgcFilterPayload {
 #[derive(Deserialize, Serialize, Debug, Validate)]
 pub struct JsonFromRequest {
     #[validate(custom(function = "validate_theaters"))]
-    pub theaters: Option<Vec<i16>>,
+    pub theaters: Option<Vec<Theater>>,
     #[validate(custom(function = "validate_dates"))]
     pub dates: Option<Vec<String>>
 }
@@ -41,13 +42,13 @@ impl JsonFromRequest {
         })
     }
 
-    fn get_theaters(theaters: Option<Vec<i16>>) -> Result<Vec<i16>, ValidationError> {
+    fn get_theaters(theaters: Option<Vec<Theater>>) -> Result<Vec<Theater>, ValidationError> {
         match theaters {
             Some(theaters)   => {
                 Ok(theaters)
             },
             None => {
-                Ok(LYON_THEATERS.to_vec())
+                Ok(theaters::get_lyon_theaters())
             }
         }
     }
@@ -92,13 +93,13 @@ impl JsonFromRequest {
     }
 }
 
-pub fn validate_theaters(theaters: &Vec<i16>) -> Result<(), ValidationError> {
+pub fn validate_theaters(theaters: &Vec<Theater>) -> Result<(), ValidationError> {
     if theaters.is_empty() {
         return Ok(());
     }
 
     for theater in theaters.iter() {
-        if !LYON_THEATERS.contains(&theater) {
+        if !theaters::get_lyon_theaters().contains(&theater) {
             return Err(ValidationError {
                 code: "invalid_date_format".into(),
                 message: Some(format!(

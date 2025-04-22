@@ -5,16 +5,16 @@ use sqlx::{PgPool};
 use crate::api::dto::{JsonFromRequest};
 use crate::api::errors::Error;
 use crate::database::domain::{Movie};
-use crate::database::movie::MoviesRepository;
+use crate::database::movie::init_movie_repository;
 use crate::services::discord::Discord;
 use crate::services::ugc::Ugc;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/retrieve-ugc-movies", get(retrieve_movies_from_ugc))
+        .route("/generate-movie-poll", get(generate_movie_poll))
 }
 
-pub async fn retrieve_movies_from_ugc(
+pub async fn generate_movie_poll(
     db: Extension<PgPool>,
     Json(payload): Json<JsonFromRequest>,
 ) -> Result<Json<Vec<Movie>>, Error> {
@@ -31,12 +31,13 @@ pub async fn retrieve_movies_from_ugc(
         Err(e) => return Err(Error::Reqwest(e))
     };
 
-    let movies = match Scrapper::get_movies_from_html(html_per_theaters_per_date) {
+    let movies = match Scrapper::get_movies_from_html(&html_per_theaters_per_date) {
         Ok(movies) => movies,
         Err(e) => return Err(Error::Scrapper(e))
     };
 
-    let stored_movies = match MoviesRepository::save(db, movies).await {
+    let movie_repo = init_movie_repository(&db);
+    let stored_movies = match movie_repo.save(movies).await {
         Ok(movies) => movies,
         Err(e) => return Err(Error::Sqlx(e))
     };

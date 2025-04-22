@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use chrono::{NaiveDate};
 use scraper::{Html, Selector};
 use scraper::error::SelectorErrorKind;
-use crate::database::domain::{Movie, Screening, HtmlFromTheatersByDate, MoviesFromHtml, Hours};
+use crate::database::domain::{Movie, Screening, HtmlFromTheatersByDate, MoviesFromHtml, Hours, Theater};
 
 pub struct Scrapper {}
 impl Scrapper {
-    pub fn get_movies_from_html(pages_per_theaters_per_date: HtmlFromTheatersByDate) -> Result<MoviesFromHtml, SelectorErrorKind<'static>> {
+    pub fn get_movies_from_html(pages_per_theaters_per_dates: &HtmlFromTheatersByDate) -> Result<MoviesFromHtml, SelectorErrorKind<'static>> {
         let mut movies: MoviesFromHtml = HashMap::new();
 
-        for (theater, page_per_date) in pages_per_theaters_per_date {
+        for (theater, page_per_date) in pages_per_theaters_per_dates {
             for (date_str, html_content) in page_per_date {
                 let date = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").unwrap();
 
@@ -61,7 +61,7 @@ impl Scrapper {
 
                     let movie = movies.get_mut(&movie_title).unwrap();
                     movie.screenings.push(
-                        Self::screenings(theater, movie_screening_times, date)
+                        Self::screenings(*theater, movie_screening_times, date)
                     );
                 }
             }
@@ -69,7 +69,7 @@ impl Scrapper {
         Ok(movies)
     }
 
-    fn screenings(theater: i16, movie_screening_times: Vec<String>, date: NaiveDate) -> Screening {
+    fn screenings(theater: Theater, movie_screening_times: Vec<String>, date: NaiveDate) -> Screening {
         Screening::new(
             theater,
             date,
