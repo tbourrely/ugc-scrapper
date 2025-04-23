@@ -1,11 +1,12 @@
-use std::{env, process};
+use std::env;
+use std::process::ExitCode;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use ugc_scrapper::migrations::init_db;
 use ugc_scrapper::features::scrapper::scrapper;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> ExitCode {
     dotenv().ok();
     let database = env::var("DATABASE_URL").expect("Expected DATABASE in the environment");
 
@@ -17,7 +18,10 @@ async fn main() {
             println!("Db connection established");
             p
         },
-        Err(e) => { panic!("failed to connect to DATABASE_URL: {e:?}") }
+        Err(e) => {
+            println!("failed to connect to DATABASE_URL: {e:?}");
+            return ExitCode::from(ExitCode::FAILURE);
+        }
     };
 
     match init_db(&pool).await {
@@ -25,11 +29,20 @@ async fn main() {
             println!("Migration Finished");
             p
         },
-        Err(e) => { panic!("An error occurred while using migrations files: {e:?}") }
+        Err(e) => {
+            println!("An error occurred while using migrations files: {e:?}");
+            return ExitCode::from(ExitCode::FAILURE);
+        }
     };
 
-    scrapper::retrieve_movies_from_ugc(&pool).await;
+    match scrapper::retrieve_movies_from_ugc(&pool).await {
+        Ok(movies) => movies,
+        Err(e) => {
+            println!("Failed to retrieve movies: {e:?}");
+            return ExitCode::from(ExitCode::FAILURE);
+        }
+    };
 
-    process::exit(0x0100);
+    ExitCode::from(ExitCode::SUCCESS)
 }
 

@@ -9,17 +9,17 @@ impl Ugc {
     pub async fn get_html_from_theaters_per_dates(theaters: Vec<Theater>, dates: Vec<NaiveDate>) -> Result<HtmlFromTheatersByDate, Error> {
         let mut theaters_html_pages_by_dates: HtmlFromTheatersByDate = HashMap::new();
         for theater in theaters.iter() {
+            let mut html_by_date: HashMap<String, String> = HashMap::new();
             for date in dates.iter() {
-                let mut html_by_date: HashMap<String, String> = HashMap::new();
-
                 let html_page = match Self::get_ugc_screening_page_by_theater_by_date(theater, date).await {
                     Ok(page) => page,
                     Err(reqwest) => return Err(reqwest),
                 };
 
                 html_by_date.insert(date.to_string(), html_page);
-                theaters_html_pages_by_dates.insert(*theater, html_by_date);
+                println!("Retrieved html for theater : {} and date {}", theater, date.to_string());
             }
+            theaters_html_pages_by_dates.insert(*theater, html_by_date);
         }
         Ok(theaters_html_pages_by_dates)
     }
