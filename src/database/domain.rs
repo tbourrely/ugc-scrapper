@@ -2,15 +2,9 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-const CONFLUENCE_THEATER: i16 = 36;
-const ASTORIA_THEATER: i16 = 33;
-const PART_DIEU_THEATER: i16 = 58;
-const CITE_INTERNATIONAL_THEATER: i16 = 32;
-pub const LYON_THEATERS: [i16; 4] = [CONFLUENCE_THEATER, ASTORIA_THEATER, PART_DIEU_THEATER, CITE_INTERNATIONAL_THEATER];
-
 pub type Theater = i16;
 
-pub type HtmlFromTheatersByDate = HashMap<i16, HashMap<String, String>>;
+pub type HtmlFromTheatersByDate = HashMap<Theater, HashMap<String, String>>;
 
 pub type MovieTitle = String;
 

@@ -2,30 +2,29 @@ use std::collections::HashMap;
 use chrono::{NaiveDate};
 use reqwest::Error;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, HOST, USER_AGENT};
-use crate::database::domain::HtmlFromTheatersByDate;
+use crate::database::domain::{HtmlFromTheatersByDate, Theater};
 
 pub struct Ugc {}
 impl Ugc {
-
-    pub async fn get_html_from_theaters_per_dates(theaters: Vec<i16>, dates: Vec<NaiveDate>) -> Result<HtmlFromTheatersByDate, Error> {
+    pub async fn get_html_from_theaters_per_dates(theaters: Vec<Theater>, dates: Vec<NaiveDate>) -> Result<HtmlFromTheatersByDate, Error> {
         let mut theaters_html_pages_by_dates: HtmlFromTheatersByDate = HashMap::new();
         for theater in theaters.iter() {
+            let mut html_by_date: HashMap<String, String> = HashMap::new();
             for date in dates.iter() {
-                let mut html_by_date: HashMap<String, String> = HashMap::new();
-
                 let html_page = match Self::get_ugc_screening_page_by_theater_by_date(theater, date).await {
                     Ok(page) => page,
                     Err(reqwest) => return Err(reqwest),
                 };
 
                 html_by_date.insert(date.to_string(), html_page);
-                theaters_html_pages_by_dates.insert(*theater, html_by_date);
+                println!("Retrieved html for theater : {} and date {}", theater, date.to_string());
             }
+            theaters_html_pages_by_dates.insert(*theater, html_by_date);
         }
         Ok(theaters_html_pages_by_dates)
     }
 
-    async fn get_ugc_screening_page_by_theater_by_date(theater: &i16, date: &NaiveDate) -> Result<String, Error> {
+    async fn get_ugc_screening_page_by_theater_by_date(theater: &Theater, date: &NaiveDate) -> Result<String, Error> {
         let base_url = "https://www.ugc.fr/showingsCinemaAjaxAction!getShowingsForCinemaPage.action";
 
         let mut headers = HeaderMap::new();
