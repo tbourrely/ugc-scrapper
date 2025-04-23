@@ -6,7 +6,6 @@ use crate::database::domain::{HtmlFromTheatersByDate, Theater};
 
 pub struct Ugc {}
 impl Ugc {
-
     pub async fn get_html_from_theaters_per_dates(theaters: Vec<Theater>, dates: Vec<NaiveDate>) -> Result<HtmlFromTheatersByDate, Error> {
         let mut theaters_html_pages_by_dates: HtmlFromTheatersByDate = HashMap::new();
         for theater in theaters.iter() {

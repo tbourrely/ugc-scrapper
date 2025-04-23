@@ -10,9 +10,9 @@ pub fn get_each_dates_of_current_week (starting_from: Option<Weekday>) -> Vec<Na
     let days_diff = (starting_from.num_days_from_monday() as i64) -
         (current_weekday.num_days_from_monday() as i64);
 
-    let t  = today + Duration::days(days_diff);
+    let date_calculated  = today + Duration::days(days_diff);
 
-    for date in t.iter_days().take(7) {
+    for date in date_calculated.iter_days().take(7) {
         dates.push(date);
     }
 

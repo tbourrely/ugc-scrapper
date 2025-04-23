@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use sqlx::{Error, PgPool, Row};
 use uuid::Uuid;
 use crate::database::domain::{Movie, MoviesFromHtml, Theater};
-use crate::utils::theaters;
+use crate::features::scrapper::utils::theaters;
 
 pub fn init_movie_repository(pool: &PgPool) -> MovieRepository {
     MovieRepository { pool: &pool }

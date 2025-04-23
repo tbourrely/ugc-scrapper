@@ -4,8 +4,8 @@ use scraper::{Html, Selector};
 use scraper::error::SelectorErrorKind;
 use crate::database::domain::{Movie, Screening, HtmlFromTheatersByDate, MoviesFromHtml, Hours, Theater};
 
-pub struct Scrapper {}
-impl Scrapper {
+pub struct HtmlParser {}
+impl HtmlParser {
     pub fn get_movies_from_html(pages_per_theaters_per_dates: &HtmlFromTheatersByDate) -> Result<MoviesFromHtml, SelectorErrorKind<'static>> {
         let mut movies: MoviesFromHtml = HashMap::new();
 

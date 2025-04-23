@@ -1,8 +1,6 @@
 use std::env;
-use axum::http::header::{ACCEPT};
-use axum::http::{HeaderMap, HeaderValue};
 use reqwest::Error;
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
 use crate::database::domain::Movie;
 
