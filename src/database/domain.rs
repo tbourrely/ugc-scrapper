@@ -10,6 +10,31 @@ pub type MovieTitle = String;
 
 pub type MoviesFromHtml = HashMap<MovieTitle, Movie>;
 
+#[derive(Debug)]
+pub enum PollType {
+    SelectDay = 0,
+    SelectMovie = 1
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Poll {
+    pub id: uuid::Uuid,
+    pub distant_id: Option<uuid::Uuid>,
+    pub poll_type: PollType,
+    pub created_at: Option<NaiveDate>,
+}
+
+impl Poll {
+    pub fn new(distant_id: uuid, poll_type: PollType, created_at: Option<NaiveDate>) -> Self {
+        Poll {
+            id: uuid::Uuid::new_v4(),
+            distant_id,
+            poll_type,
+            created_at,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Movie {
     pub id: uuid::Uuid,

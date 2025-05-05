@@ -8,7 +8,10 @@ pub enum Error {
     #[error("an internal database error occurred")]
     Sqlx(#[from] sqlx::Error),
 
-    #[error("An error occurred while trying to retrieve movies from UGC")]
+    #[error("an error occurred while running migrations")]
+    SqlxMigration(#[from] sqlx::migrate::MigrateError),
+
+    #[error("An error occurred while sending request to another api")]
     Reqwest(#[from] reqwest::Error),
 
     #[error("An error occurred while parsing UGC page")]
