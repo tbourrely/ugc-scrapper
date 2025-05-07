@@ -9,7 +9,7 @@ async fn main() -> ExitCode {
     let pool = match init_db().await {
         Ok(p) => p,
         Err(e) => {
-            println!("An error occurred while trying to int db: {e:?}");
+            println!("An error occurred while trying to init db: {e:?}");
             return ExitCode::from(ExitCode::FAILURE);
         }
     };
@@ -17,7 +17,7 @@ async fn main() -> ExitCode {
     match select_day::generate_poll_to_select_days(&pool).await {
         Ok(p) => p,
         Err(e) => {
-            println!("An error occurred while trying to int db: {e:?}");
+            println!("Failed to generate poll to select days: {e:?}");
             return ExitCode::from(ExitCode::FAILURE);
         }
     };

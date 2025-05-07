@@ -9,7 +9,7 @@ async fn main() -> ExitCode {
     let pool = match init_db().await {
         Ok(p) => p,
         Err(e) => {
-            println!("An error occurred while trying to int db: {e:?}");
+            println!("An error occurred while trying to init db: {e:?}");
             return ExitCode::from(ExitCode::FAILURE);
         }
     };
