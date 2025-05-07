@@ -10,7 +10,7 @@ pub struct PollAnswer {
    pub answer: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PollApiUpsertPayload {
     pub id: Option<Uuid>,
     cron: String,
@@ -19,7 +19,8 @@ pub struct PollApiUpsertPayload {
     multiselect: bool,
     guild: String,
     channel: String,
-    duration: i32
+    duration: i32,
+    onetime: bool,
 }
 
 impl PollApiUpsertPayload {
@@ -30,23 +31,28 @@ impl PollApiUpsertPayload {
             question,
             answers,
             multiselect: true,
-            guild:  DISCORD_GUILD,
-            channel: DISCORD_CHANNEL,
-            duration: 86400
+            guild:  String::from(DISCORD_GUILD),
+            channel: String::from(DISCORD_CHANNEL),
+            duration: 86400,
+            onetime: false
         }
     }
 
-    pub fn transform(mut self) -> Poll {
-        Poll::new(self.id, PollType::SelectDay, None)
+    pub fn set_id(&mut self, id: Uuid) {
+        self.id = Some(id);
+    }
+
+    pub fn transform(self) -> Poll {
+        Poll::new(self.id.unwrap(), PollType::SelectDay, None)
     }
 }
 
-const DISCORD_GUILD: String = String::from("le club des cinephiles");
-const DISCORD_CHANNEL: String = String::from("cinema");
+const DISCORD_GUILD: &str = "le club des cinephiles";
+const DISCORD_CHANNEL: &str = "cinema";
 
 pub struct PollGeneratorApi {}
 impl PollGeneratorApi {
-    pub async fn initiate_poll_creation<T>(poll: T, url: String) -> Result<T, Error> {
+    pub async fn initiate_poll_creation(mut poll: PollApiUpsertPayload, url: String) -> Result<PollApiUpsertPayload, Error> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
@@ -58,10 +64,14 @@ impl PollGeneratorApi {
             Err(reqwest_error) => return Err(reqwest_error)
         };
 
-        match result.json().await {
-            Ok(poll) => Ok(poll),
-            Err(reqwest_error) => Err(reqwest_error)
-        }
+        let res = match result.json().await {
+            Ok(poll) => poll,
+            Err(reqwest_error) => return Err(reqwest_error)
+        };
+
+        poll.set_id(res);
+
+        Ok(poll)
     }
 
     pub async fn get_answers_from_last_poll() -> Result<Vec<PollAnswer>, Error> {
@@ -113,9 +123,10 @@ impl PollGeneratorApi {
             question: String::from("Quel film ?"),
             answers: movies.iter().map(|m| m.title.clone()).collect(),
             multiselect: true,
-            guild:  DISCORD_GUILD,
-            channel: DISCORD_CHANNEL,
-            duration: 86400
+            guild:  String::from(DISCORD_GUILD),
+            channel: String::from(DISCORD_CHANNEL),
+            duration: 86400,
+            onetime: false
         }
     }
 }

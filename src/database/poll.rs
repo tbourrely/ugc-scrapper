@@ -18,7 +18,7 @@ impl<'a> PollRepository<'a> {
         ")
             .bind(poll.id)
             .bind(poll.distant_id)
-            .bind(poll.poll_type.to_string())
+            .bind(poll.get_poll_type_number())
             .execute(self.pool)
             .await?;
 

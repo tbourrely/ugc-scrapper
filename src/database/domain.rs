@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub type Theater = i16;
 
@@ -10,7 +11,7 @@ pub type MovieTitle = String;
 
 pub type MoviesFromHtml = HashMap<MovieTitle, Movie>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PollType {
     SelectDay = 0,
     SelectMovie = 1
@@ -18,26 +19,30 @@ pub enum PollType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Poll {
-    pub id: uuid::Uuid,
-    pub distant_id: Option<uuid::Uuid>,
+    pub id: Uuid,
+    pub distant_id: Option<Uuid>,
     pub poll_type: PollType,
     pub created_at: Option<NaiveDate>,
 }
 
 impl Poll {
-    pub fn new(distant_id: uuid, poll_type: PollType, created_at: Option<NaiveDate>) -> Self {
+    pub fn new(distant_id: Uuid, poll_type: PollType, created_at: Option<NaiveDate>) -> Self {
         Poll {
-            id: uuid::Uuid::new_v4(),
-            distant_id,
+            id: Uuid::new_v4(),
+            distant_id: Some(distant_id),
             poll_type,
             created_at,
         }
+    }
+
+    pub fn get_poll_type_number(&self) -> i16 {
+        self.poll_type.clone() as i16
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Movie {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     pub title: String,
     pub grade: f32,
     pub screenings: Vec<Screening>,
@@ -46,7 +51,7 @@ pub struct Movie {
 impl Movie {
     pub fn new(title: String, grade: f32) -> Self {
         Movie {
-            id: uuid::Uuid::new_v4(),
+            id: Uuid::new_v4(),
             title,
             grade,
             screenings: vec![],
@@ -61,7 +66,7 @@ pub struct Hours {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Screening {
-    pub id: uuid::Uuid,
+    pub id: Uuid,
     pub theater: Theater,
     pub due_date: NaiveDate,
     pub hours: Hours
@@ -70,7 +75,7 @@ pub struct Screening {
 impl Screening {
     pub fn new(theater: Theater, due_date: NaiveDate, hours: Hours) -> Self {
         Screening {
-            id: uuid::Uuid::new_v4(),
+            id: Uuid::new_v4(),
             theater,
             due_date,
             hours
