@@ -25,14 +25,16 @@ pub struct PollApiUpsertPayload {
 
 impl PollApiUpsertPayload {
     pub fn new(id: Option<Uuid>, cron: String, question: String, answers: Vec<String>) -> Self {
+        let discord_guild = env::var("DISCORD_GUILD").expect("Expected DISCORD_GUILD in the environment");
+        let discord_channel = env::var("DISCORD_CHANNEL").expect("Expected DISCORD_CHANNEL in the environment");
         PollApiUpsertPayload {
             id,
             cron,
             question,
             answers,
             multiselect: true,
-            guild:  String::from(DISCORD_GUILD),
-            channel: String::from(DISCORD_CHANNEL),
+            guild: discord_guild,
+            channel: discord_channel,
             duration: 86400,
             onetime: false
         }
@@ -47,8 +49,6 @@ impl PollApiUpsertPayload {
     }
 }
 
-const DISCORD_GUILD: &str = "le club des cinephiles";
-const DISCORD_CHANNEL: &str = "cinema";
 
 pub struct PollGeneratorApi {}
 impl PollGeneratorApi {
@@ -117,14 +117,16 @@ impl PollGeneratorApi {
     }
 
     pub fn create_poll_instance_for_movies(movies: Vec<Movie>) -> PollApiUpsertPayload {
+        let discord_guild = env::var("DISCORD_GUILD").expect("Expected DISCORD_GUILD in the environment");
+        let discord_channel = env::var("DISCORD_CHANNEL").expect("Expected DISCORD_CHANNEL in the environment");
         PollApiUpsertPayload {
             id: None,
             cron: String::from("30 18 * * 1"),
             question: String::from("Quel film ?"),
             answers: movies.iter().map(|m| m.title.clone()).collect(),
             multiselect: true,
-            guild:  String::from(DISCORD_GUILD),
-            channel: String::from(DISCORD_CHANNEL),
+            guild: discord_guild,
+            channel: discord_channel,
             duration: 86400,
             onetime: false
         }
