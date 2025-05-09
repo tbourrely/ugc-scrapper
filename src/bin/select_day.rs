@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 use dotenv::dotenv;
 use ugc_scrapper::database::init_db::init_db;
-use ugc_scrapper::features::scrapper::scrapper;
+use ugc_scrapper::features::discord::select_day;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -14,14 +14,13 @@ async fn main() -> ExitCode {
         }
     };
 
-    match scrapper::retrieve_movies_from_ugc(&pool).await {
-        Ok(movies) => movies,
+    match select_day::generate_poll_to_select_days(&pool).await {
+        Ok(p) => p,
         Err(e) => {
-            println!("Failed to retrieve movies: {e:?}");
+            println!("Failed to generate poll to select days: {e:?}");
             return ExitCode::from(ExitCode::FAILURE);
         }
     };
 
     ExitCode::from(ExitCode::SUCCESS)
 }
-
