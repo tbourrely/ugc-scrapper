@@ -1,5 +1,5 @@
 use sqlx::{Error, PgPool};
-use crate::database::domain::{Poll};
+use crate::database::models::{Poll};
 
 pub fn init_poll_repository(pool: &PgPool) -> PollRepository {
     PollRepository { pool: &pool }

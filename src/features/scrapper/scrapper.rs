@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use sqlx::PgPool;
-use crate::database::domain::Theater;
-use crate::database::movie::init_movie_repository;
+use crate::database::models::Theater;
+use crate::database::repositories::movie::init_movie_repository;
 use crate::errors::Error;
 use crate::features::scrapper::services::html_parser::HtmlParser;
 use crate::features::scrapper::services::ugc::Ugc;

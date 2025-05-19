@@ -1,13 +1,10 @@
-use std::env;
 use sqlx::PgPool;
-use crate::database::poll::init_poll_repository;
+use crate::database::repositories::poll::init_poll_repository;
 use crate::errors::Error;
-use crate::features::discord::services::poll::{PollApiUpsertPayload, PollGeneratorApi};
+use crate::features::discord::poll_domain::PollApiUpsertPayload;
+use crate::features::discord::use_cases::poll_api_use_case::{PollApiUseCase};
 
 pub async fn generate_poll_to_select_days (db: &PgPool) -> Result<(), Error> {
-    let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
-    let url = String::from(discord_api_base_url) + "/polls";
-
     let poll: PollApiUpsertPayload = PollApiUpsertPayload::new(
         None,
         String::from("15 16 * * 0"),
@@ -23,7 +20,7 @@ pub async fn generate_poll_to_select_days (db: &PgPool) -> Result<(), Error> {
         ]
     );
 
-    let poll_payload = match PollGeneratorApi::initiate_poll_creation(poll, url).await {
+    let poll_payload = match PollApiUseCase::initiate_poll_creation(poll).await {
         Ok(poll) => poll,
         Err(e) => return Err(Error::Reqwest(e))
     };

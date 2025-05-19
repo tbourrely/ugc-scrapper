@@ -2,12 +2,13 @@ use std::collections::HashMap;
 use chrono::{NaiveDate};
 use scraper::{Html, Selector};
 use scraper::error::SelectorErrorKind;
-use crate::database::domain::{Movie, Screening, HtmlFromTheatersByDate, MoviesFromHtml, Hours, Theater};
+use crate::database::models::{Movie, Screening, Theater};
+use crate::features::scrapper::scrapper_domain::HtmlFromTheatersByDate;
 
 pub struct HtmlParser {}
 impl HtmlParser {
-    pub fn get_movies_from_html(pages_per_theaters_per_dates: &HtmlFromTheatersByDate) -> Result<MoviesFromHtml, SelectorErrorKind<'static>> {
-        let mut movies: MoviesFromHtml = HashMap::new();
+    pub fn get_movies_from_html(pages_per_theaters_per_dates: &HtmlFromTheatersByDate) -> Result<Vec<Movie>, SelectorErrorKind<'static>> {
+        let mut movies: HashMap<String, Movie> = HashMap::new();
 
         for (theater, page_per_date) in pages_per_theaters_per_dates {
             for (date_str, html_content) in page_per_date {
@@ -66,16 +67,14 @@ impl HtmlParser {
                 }
             }
         }
-        Ok(movies)
+        Ok(movies.values().cloned().collect())
     }
 
     fn screenings(theater: Theater, movie_screening_times: Vec<String>, date: NaiveDate) -> Screening {
         Screening::new(
             theater,
             date,
-            Hours {
-                hours: movie_screening_times
-            }
+            movie_screening_times
         )
     }
 }

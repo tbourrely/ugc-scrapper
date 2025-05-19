@@ -12,6 +12,8 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_URL: ${DATABASE_URL}
       DISCORD_API_BASE_URL: ${DISCORD_API_BASE_URL}
+      DISCORD_GUILD: ${DISCORD_GUILD}
+      DISCORD_CHANNEL: ${DISCORD_CHANNEL}
     depends_on:
       - db
     profiles: [production]

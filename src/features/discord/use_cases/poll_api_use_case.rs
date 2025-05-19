@@ -1,58 +1,22 @@
 use std::env;
-use reqwest::Error;
+use reqwest::{Error};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONTENT_TYPE};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use uuid::Uuid;
-use crate::database::domain::{Movie, Poll, PollType};
+use crate::database::models::{Movie};
+use crate::features::discord::poll_domain::PollApiUpsertPayload;
 
 #[derive(Debug, Deserialize)]
 pub struct PollAnswer {
-   pub answer: String,
+    pub _answer: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PollApiUpsertPayload {
-    pub id: Option<Uuid>,
-    cron: String,
-    question: String,
-    answers: Vec<String>,
-    multiselect: bool,
-    guild: String,
-    channel: String,
-    duration: i32,
-    onetime: bool,
-}
+pub struct PollApiUseCase {}
+impl PollApiUseCase {
+    pub async fn initiate_poll_creation(mut poll: PollApiUpsertPayload) -> Result<PollApiUpsertPayload, Error> {
+        let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
+        let url = String::from(discord_api_base_url) + "/polls";
 
-impl PollApiUpsertPayload {
-    pub fn new(id: Option<Uuid>, cron: String, question: String, answers: Vec<String>) -> Self {
-        let discord_guild = env::var("DISCORD_GUILD").expect("Expected DISCORD_GUILD in the environment");
-        let discord_channel = env::var("DISCORD_CHANNEL").expect("Expected DISCORD_CHANNEL in the environment");
-        PollApiUpsertPayload {
-            id,
-            cron,
-            question,
-            answers,
-            multiselect: true,
-            guild: discord_guild,
-            channel: discord_channel,
-            duration: 86400,
-            onetime: false
-        }
-    }
-
-    pub fn set_id(&mut self, id: Uuid) {
-        self.id = Some(id);
-    }
-
-    pub fn transform(self) -> Poll {
-        Poll::new(self.id.unwrap(), PollType::SelectDay, None)
-    }
-}
-
-
-pub struct PollGeneratorApi {}
-impl PollGeneratorApi {
-    pub async fn initiate_poll_creation(mut poll: PollApiUpsertPayload, url: String) -> Result<PollApiUpsertPayload, Error> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
@@ -74,7 +38,7 @@ impl PollGeneratorApi {
         Ok(poll)
     }
 
-    pub async fn get_answers_from_last_poll() -> Result<Vec<PollAnswer>, Error> {
+    pub async fn _get_answers_from_poll(_poll_id: Uuid) -> Result<Vec<PollAnswer>, Error> {
         let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
         let url = String::from(discord_api_base_url) + "/poll_answers/most_recent_poll";
 
@@ -96,11 +60,11 @@ impl PollGeneratorApi {
         Ok(answers)
     }
 
-    pub async fn generate_poll_with_movies(movies: Vec<Movie>) -> Result<(), Error> {
+    pub async fn _generate_poll_with_movies(movies: Vec<Movie>) -> Result<(), Error> {
         let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
         let url = String::from(discord_api_base_url) + "/polls";
 
-        let poll = PollGeneratorApi::create_poll_instance_for_movies(movies);
+        let poll = PollApiUseCase::_create_poll_instance_for_movies(movies);
 
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
@@ -116,7 +80,7 @@ impl PollGeneratorApi {
         Ok(())
     }
 
-    pub fn create_poll_instance_for_movies(movies: Vec<Movie>) -> PollApiUpsertPayload {
+    pub fn _create_poll_instance_for_movies(movies: Vec<Movie>) -> PollApiUpsertPayload {
         let discord_guild = env::var("DISCORD_GUILD").expect("Expected DISCORD_GUILD in the environment");
         let discord_channel = env::var("DISCORD_CHANNEL").expect("Expected DISCORD_CHANNEL in the environment");
         PollApiUpsertPayload {

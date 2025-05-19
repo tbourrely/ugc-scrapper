@@ -1,15 +1,8 @@
-use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub type Theater = i16;
-
-pub type HtmlFromTheatersByDate = HashMap<Theater, HashMap<String, String>>;
-
-pub type MovieTitle = String;
-
-pub type MoviesFromHtml = HashMap<MovieTitle, Movie>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PollType {
@@ -60,20 +53,15 @@ impl Movie {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Hours {
-    pub hours: Vec<String>
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Screening {
     pub id: Uuid,
     pub theater: Theater,
     pub due_date: NaiveDate,
-    pub hours: Hours
+    pub hours: Vec<String>
 }
 
 impl Screening {
-    pub fn new(theater: Theater, due_date: NaiveDate, hours: Hours) -> Self {
+    pub fn new(theater: Theater, due_date: NaiveDate, hours: Vec<String>) -> Self {
         Screening {
             id: Uuid::new_v4(),
             theater,

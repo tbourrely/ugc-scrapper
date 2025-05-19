@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use sqlx::{Error, PgPool, Row};
 use uuid::Uuid;
-use crate::database::domain::{Movie, MoviesFromHtml, Theater};
+use crate::database::models::{Movie, Theater};
 use crate::features::scrapper::utils::theaters;
 
 pub fn init_movie_repository(pool: &PgPool) -> MovieRepository {
@@ -48,46 +48,44 @@ impl<'a> MovieRepository<'a> {
         Ok(movie_uuid_by_title)
     }
 
-    pub async fn save(&self, movies: MoviesFromHtml) -> Result<Vec<Movie>, Error> {
-        let mut movies_in_db: Vec<Movie> = Vec::new();
-
+    pub async fn save(&self, movies: Vec<Movie>) -> Result<Vec<Movie>, Error> {
         let theater_hash_map = self.resolve_theater_id().await?;
 
-        let mut movie_uuid_by_title = self.get_existing_movies_by_titles(movies.keys().cloned().collect()).await?;
+        let movie_titles: Vec<String> = movies.iter().map(|m| m.title.clone()).collect();
+        let movie_uuid_by_title = self.get_existing_movies_by_titles(movie_titles).await?;
 
         let mut movie_uuids: Vec<Uuid> = Vec::new();
         let mut movie_titles: Vec<String> = Vec::new();
         let mut movie_grades: Vec<f32> = Vec::new();
 
         let mut screening_ids: Vec<Uuid> = Vec::new();
-        let mut screening_movie_ids: Vec<Uuid> = Vec::new();
+        let mut screening_movie_ids: Vec<&Uuid> = Vec::new();
         let mut screening_theater_ids: Vec<Uuid> = Vec::new();
         let mut screening_due_dates: Vec<String> = Vec::new();
         let mut screening_hours: Vec<String> = Vec::new();
 
-        for (title, movie) in movies {
+        for movie in &movies {
+            let cloned_movie = movie.clone();
 
-            if !movie_uuid_by_title.contains_key(&title) {
+            if !movie_uuid_by_title.contains_key(&cloned_movie.title) {
                 movie_uuids.push(movie.id);
-                movie_titles.push(movie.title.clone());
+                movie_titles.push(cloned_movie.title.clone());
                 movie_grades.push(movie.grade);
             }
 
-            for screening in &movie.screenings {
+            for screening in movie.screenings.clone() {
                 screening_ids.push(screening.id);
 
-                if movie_uuid_by_title.contains_key(&title) {
-                    screening_movie_ids.push(*movie_uuid_by_title.get_mut(&title).unwrap());
+                if movie_uuid_by_title.contains_key(&cloned_movie.title) {
+                    screening_movie_ids.push(movie_uuid_by_title.get(&movie.title).unwrap());
                 } else {
-                    screening_movie_ids.push(movie.id);
+                    screening_movie_ids.push(&movie.id);
                 }
 
                 screening_theater_ids.push(*theater_hash_map.get((&screening.theater).into()).unwrap());
                 screening_due_dates.push(screening.due_date.to_string());
-                screening_hours.push(serde_json::to_string(&screening.hours.hours).unwrap());
+                screening_hours.push(serde_json::to_string(&screening.hours).unwrap());
             }
-
-            movies_in_db.push(movie);
         }
 
         sqlx::query(
@@ -116,6 +114,6 @@ impl<'a> MovieRepository<'a> {
             .execute(self.pool)
             .await?;
 
-        Ok(movies_in_db)
+        Ok(movies)
     }
 }
