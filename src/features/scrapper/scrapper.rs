@@ -5,7 +5,7 @@ use crate::database::repositories::movie::init_movie_repository;
 use crate::errors::Error;
 use crate::features::scrapper::services::html_parser::HtmlParser;
 use crate::features::scrapper::services::ugc::Ugc;
-use crate::features::scrapper::utils::{dates, theaters};
+use crate::utils::{dates, theaters};
 
 pub async fn retrieve_movies_from_ugc (db: &PgPool) -> Result<(), Error> {
     let dates: Vec<NaiveDate> = dates::get_each_dates_of_current_week(None);

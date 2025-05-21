@@ -6,24 +6,36 @@ use uuid::Uuid;
 use crate::database::models::{Movie};
 use crate::features::discord::poll_domain::PollApiUpsertPayload;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct PollAnswer {
-    pub _answer: String,
+    pub answer: String,
+    pub votes: i32
 }
 
-pub struct PollApiUseCase {}
+pub struct PollApiUseCase {
+    base_url: String,
+    headers: HeaderMap,
+}
 impl PollApiUseCase {
-    pub async fn initiate_poll_creation(mut poll: PollApiUpsertPayload) -> Result<PollApiUpsertPayload, Error> {
+    pub fn new() -> Self {
         let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
-        let url = String::from(discord_api_base_url) + "/polls";
 
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
+        let mut header_map = HeaderMap::new();
+        header_map.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        header_map.insert(ACCEPT, HeaderValue::from_static("application/json"));
+
+        Self {
+            base_url: discord_api_base_url,
+            headers: header_map,
+        }
+    }
+
+    pub async fn initiate_poll_creation(&self, mut poll: PollApiUpsertPayload) -> Result<PollApiUpsertPayload, Error> {
+        let url = format!("{base_url}/polls/", base_url = self.base_url);
 
         let client = reqwest::Client::new();
 
-        let result = match client.post(&url).headers(headers).json(&poll).send().await {
+        let result = match client.post(&url).headers(self.headers.clone()).json(&poll).send().await {
             Ok(response) => response,
             Err(reqwest_error) => return Err(reqwest_error)
         };
@@ -38,16 +50,17 @@ impl PollApiUseCase {
         Ok(poll)
     }
 
-    pub async fn _get_answers_from_poll(_poll_id: Uuid) -> Result<Vec<PollAnswer>, Error> {
-        let discord_api_base_url = env::var("DISCORD_API_BASE_URL").expect("Expected DISCORD_API_BASE_URL in the environment");
-        let url = String::from(discord_api_base_url) + "/poll_answers/most_recent_poll";
+    pub async fn get_days_from_poll_answers(&self, poll_id: Uuid) -> Result<Vec<String>, Error> {
+        let url = format!(
+            "{base_url}/polls/{id}/instances/answers",
+            base_url = self.base_url,
+            id = poll_id
+        );
 
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
+        println!("url: {}", url);
 
         let client = reqwest::Client::new();
-        let response = match client.get(&url).headers(headers).send().await {
+        let response = match client.get(&url).headers(self.headers.clone()).send().await {
             Ok(response) => response,
             Err(reqwest_error) => return Err(reqwest_error)
         };
@@ -57,7 +70,25 @@ impl PollApiUseCase {
             Err(reqwest_error) => return Err(reqwest_error)
         };
 
-        Ok(answers)
+        println!("{:#?}", answers);
+
+        let mut most_voted_answers: Vec<String> = Vec::new();
+        let answer_with_most_vote = answers.iter()
+            .enumerate()
+            .max_by_key(|(_, p)| p.votes)
+            .map(|(_, p)| p);
+
+        if answer_with_most_vote.is_none() {
+            return Ok(Vec::new())
+        }
+
+        for answer in &answers {
+            if answer.votes == answer_with_most_vote.unwrap().votes {
+                most_voted_answers.push(answer.answer.clone());
+            }
+        }
+
+        Ok(most_voted_answers)
     }
 
     pub async fn _generate_poll_with_movies(movies: Vec<Movie>) -> Result<(), Error> {

@@ -20,7 +20,8 @@ pub async fn generate_poll_to_select_days (db: &PgPool) -> Result<(), Error> {
         ]
     );
 
-    let poll_payload = match PollApiUseCase::initiate_poll_creation(poll).await {
+    let poll_api_use_case = PollApiUseCase::new();
+    let poll_payload = match poll_api_use_case.initiate_poll_creation(poll).await {
         Ok(poll) => poll,
         Err(e) => return Err(Error::Reqwest(e))
     };

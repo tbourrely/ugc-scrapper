@@ -1,5 +1,6 @@
-use sqlx::{Error, PgPool};
-use crate::database::models::{Poll};
+use chrono::{NaiveDate, NaiveDateTime};
+use sqlx::{Error, PgPool, Row};
+use crate::database::models::{Poll, PollType};
 
 pub fn init_poll_repository(pool: &PgPool) -> PollRepository {
     PollRepository { pool: &pool }
@@ -23,5 +24,22 @@ impl<'a> PollRepository<'a> {
             .await?;
 
         Ok(poll)
+    }
+
+    pub async fn get_last_day_poll(&self) -> Result<Poll, Error> {
+        let row = sqlx::query("
+            SELECT * FROM polls
+            WHERE type = $1
+        ")
+        .bind(PollType::SelectDay as i16)
+        .fetch_one(self.pool)
+        .await?;
+
+        Ok(Poll {
+            id: row.get::<uuid::Uuid, usize>(0),
+            distant_id: Some(row.get::<uuid::Uuid, usize>(1)),
+            poll_type: PollType::SelectDay,
+            created_at: Some(NaiveDate::from(row.get::<NaiveDateTime, usize>(3))),
+        })
     }
 }
