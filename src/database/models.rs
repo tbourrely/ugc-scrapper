@@ -13,7 +13,7 @@ pub enum PollType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Poll {
     pub id: Uuid,
-    pub distant_id: Option<Uuid>,
+    pub distant_id: Uuid,
     pub poll_type: PollType,
     pub created_at: Option<NaiveDate>,
 }
@@ -22,7 +22,7 @@ impl Poll {
     pub fn new(distant_id: Uuid, poll_type: PollType, created_at: Option<NaiveDate>) -> Self {
         Poll {
             id: Uuid::new_v4(),
-            distant_id: Some(distant_id),
+            distant_id,
             poll_type,
             created_at,
         }

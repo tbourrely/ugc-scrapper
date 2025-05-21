@@ -18,7 +18,6 @@ pub struct PollApiUpsertPayload {
 
 impl PollApiUpsertPayload {
     pub fn new(id: Option<Uuid>, cron: String, question: String, answers: Vec<String>) -> Self {
-        //println!("{:?}", env::vars());
         let discord_guild = env::var("DISCORD_GUILD").expect("Expected DISCORD_GUILD in the environment");
         let discord_channel = env::var("DISCORD_CHANNEL").expect("Expected DISCORD_CHANNEL in the environment");
         PollApiUpsertPayload {

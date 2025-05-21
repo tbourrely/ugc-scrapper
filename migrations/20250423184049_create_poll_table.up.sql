@@ -7,11 +7,9 @@ CREATE TABLE polls
     created_at     timestamp default current_timestamp
 );
 
-CREATE TABLE answer
+CREATE TABLE movies_seen
 (
     id          uuid PRIMARY KEY,
-    poll_id     uuid,
     content     varchar,
-    created_at  timestamp,
-    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
+    created_at  timestamp
 )

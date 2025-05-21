@@ -7,14 +7,20 @@ use crate::utils::dates;
 pub async fn generate_poll_to_select_movies (db: &PgPool) -> Result<(), Error> {
     // get poll distant id
     let poll_repository = init_poll_repository(db);
-    let poll = match poll_repository.get_last_day_poll().await {
+    let option_poll = match poll_repository.get_last_day_poll().await {
         Ok(poll) => poll,
         Err(e) => return Err(Error::Sqlx(e))
     };
 
+    if option_poll.is_none() {
+        return Err(Error::Other("No poll were found".to_string()));
+    }
+
+    let poll = option_poll.unwrap();
+
     // get day(s) from poll
     let poll_api_use_case = PollApiUseCase::new();
-    let voted_days = match poll_api_use_case.get_days_from_poll_answers(poll.distant_id.unwrap()).await {
+    let voted_days = match poll_api_use_case.get_days_from_poll_answers(poll.distant_id).await {
         Ok(most_voted_answer) => most_voted_answer,
         Err(e) => return Err(Error::Reqwest(e))
     };
@@ -31,6 +37,7 @@ pub async fn generate_poll_to_select_movies (db: &PgPool) -> Result<(), Error> {
     println!("{:?}", dates);
 
     // retrieve movies not seen since 2 month
+
 
     // generate poll for movies
     // ⚠ poll in discord are limited to just 10 possible answers.

@@ -26,20 +26,26 @@ impl<'a> PollRepository<'a> {
         Ok(poll)
     }
 
-    pub async fn get_last_day_poll(&self) -> Result<Poll, Error> {
+    pub async fn get_last_day_poll(&self) -> Result<Option<Poll>, Error> {
         let row = sqlx::query("
             SELECT * FROM polls
             WHERE type = $1
         ")
         .bind(PollType::SelectDay as i16)
-        .fetch_one(self.pool)
+        .fetch_optional(self.pool)
         .await?;
 
-        Ok(Poll {
-            id: row.get::<uuid::Uuid, usize>(0),
-            distant_id: Some(row.get::<uuid::Uuid, usize>(1)),
+        if row.is_none() {
+            return Ok(None)
+        }
+
+        let pg_row = row.unwrap();
+
+        Ok(Some(Poll {
+            id: pg_row.get::<uuid::Uuid, usize>(0),
+            distant_id: pg_row.get(1),
             poll_type: PollType::SelectDay,
-            created_at: Some(NaiveDate::from(row.get::<NaiveDateTime, usize>(3))),
-        })
+            created_at: Some(NaiveDate::from(pg_row.get::<NaiveDateTime, usize>(3))),
+        }))
     }
 }

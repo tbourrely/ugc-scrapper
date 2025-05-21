@@ -16,6 +16,9 @@ pub enum Error {
 
     #[error("An error occurred while parsing UGC page")]
     Scrapper(#[from] SelectorErrorKind<'static>),
+
+    #[error("An error occurred")]
+    Other(String),
 }
 
 impl Error {}
