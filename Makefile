@@ -1,8 +1,11 @@
 run-scrapper:
-	cargo watch -x run -- cargo run --bin ugc_scrapper
+	cargo watch -x run -- cargo run --bin scrapper
 
 run-day:
 	cargo watch -x run -- cargo run --bin select_day
+
+run-movie:
+	cargo watch -x run -- cargo run --bin select_movie
 
 test:
 	cargo test
