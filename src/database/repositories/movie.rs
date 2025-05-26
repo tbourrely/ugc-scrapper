@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use chrono::{NaiveDate};
 use sqlx::{Error, PgPool, Row};
+use sqlx::types::Json;
 use uuid::Uuid;
-use crate::database::models::{Movie, Theater};
+use crate::database::models::{Movie, Screening, Theater};
 use crate::utils::theaters;
 
 pub fn init_movie_repository(pool: &PgPool) -> MovieRepository {
@@ -61,7 +63,7 @@ impl<'a> MovieRepository<'a> {
         let mut screening_ids: Vec<Uuid> = Vec::new();
         let mut screening_movie_ids: Vec<&Uuid> = Vec::new();
         let mut screening_theater_ids: Vec<Uuid> = Vec::new();
-        let mut screening_due_dates: Vec<String> = Vec::new();
+        let mut screening_due_dates: Vec<NaiveDate> = Vec::new();
         let mut screening_hours: Vec<String> = Vec::new();
 
         for movie in &movies {
@@ -83,7 +85,7 @@ impl<'a> MovieRepository<'a> {
                 }
 
                 screening_theater_ids.push(*theater_hash_map.get((&screening.theater).into()).unwrap());
-                screening_due_dates.push(screening.due_date.to_string());
+                screening_due_dates.push(screening.due_date);
                 screening_hours.push(serde_json::to_string(&screening.hours).unwrap());
             }
         }
@@ -103,7 +105,7 @@ impl<'a> MovieRepository<'a> {
         sqlx::query(
             "
                 INSERT INTO screenings(id, movie_id, theater_id, screenings_time, due_date)
-                SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::uuid[], $4::json[], $5::text[])
+                SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::uuid[], $4::json[], $5::date[])
             "
         )
             .bind(&screening_ids[..])
@@ -113,6 +115,57 @@ impl<'a> MovieRepository<'a> {
             .bind(&screening_due_dates[..])
             .execute(self.pool)
             .await?;
+
+        Ok(movies)
+    }
+
+    pub async fn retrieve_movies_for_specific_date(&self, due_date: Vec<NaiveDate>, title_excluded: Vec<String>) -> Result<HashMap<String, Movie>, Error> {
+        let rows = sqlx::query(
+            "
+                SELECT
+                    m.id,
+                    m.title,
+                    m.grade,
+                    s.id,
+                    s.movie_id,
+                    t.ugc_identifier,
+                    s.screenings_time,
+                    s.due_date
+                FROM movies m
+                INNER JOIN screenings s ON s.movie_id = m.id AND s.due_date = ANY ($1)
+                LEFT JOIN theaters t ON t.id = s.theater_id
+                WHERE title != ALL($2)
+            ",
+        )
+            .bind(&due_date[..])
+            .bind(&title_excluded[..])
+            .fetch_all(self.pool)
+            .await?;
+
+        let mut movies: HashMap<String, Movie> = HashMap::new();
+        for row in rows {
+            let movie_title = row.get::<String, usize>(1);
+
+            if !movies.contains_key(&movie_title) {
+                let movie = Movie::new(
+                    Some(row.get::<Uuid, usize>(0)),
+                    row.get::<String, usize>(1),
+                    row.get::<f32, usize>(2)
+                );
+                movies.insert(row.get::<String, usize>(1), movie);
+            }
+
+            let movie = movies.get_mut(&movie_title).unwrap();
+            let hours: Vec<String> = row.get::<Json<Vec<String>>, usize>(6).to_vec();
+            movie.screenings.push(
+                Screening::new(
+                    Some(row.get::<Uuid, usize>(3)),
+                    row.get::<Theater, usize>(5),
+                    row.get::<NaiveDate, usize>(7),
+                    hours
+                )
+            );
+        }
 
         Ok(movies)
     }

@@ -42,9 +42,16 @@ pub struct Movie {
 }
 
 impl Movie {
-    pub fn new(title: String, grade: f32) -> Self {
+    pub fn new(id: Option<Uuid>, title: String, grade: f32) -> Self {
+        let uuid: Uuid;
+        if id.is_none() {
+            uuid = Uuid::new_v4();
+        } else {
+            uuid = id.unwrap();
+        }
+
         Movie {
-            id: Uuid::new_v4(),
+            id: uuid,
             title,
             grade,
             screenings: vec![],
@@ -61,12 +68,41 @@ pub struct Screening {
 }
 
 impl Screening {
-    pub fn new(theater: Theater, due_date: NaiveDate, hours: Vec<String>) -> Self {
+    pub fn new(id: Option<Uuid>, theater: Theater, due_date: NaiveDate, hours: Vec<String>) -> Self {
+        let uuid: Uuid;
+        if id.is_none() {
+            uuid = Uuid::new_v4();
+        } else {
+            uuid = id.unwrap();
+        }
         Screening {
-            id: Uuid::new_v4(),
+            id: uuid,
             theater,
             due_date,
             hours
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct MoviesSeen {
+    pub id: Uuid,
+    pub content: String,
+    pub created_at: Option<NaiveDate>,
+}
+
+impl MoviesSeen {
+    pub fn new(id: Option<Uuid>, content: String, created_at: Option<NaiveDate>) -> Self {
+        let uuid: Uuid;
+        if id.is_none() {
+            uuid = Uuid::new_v4();
+        } else {
+            uuid = id.unwrap();
+        }
+        MoviesSeen {
+            id: uuid,
+            content,
+            created_at
         }
     }
 }

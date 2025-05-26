@@ -56,7 +56,7 @@ impl HtmlParser {
                     };
                     
                     if !movies.contains_key(&movie_title) {
-                        let movie = Movie::new(movie_title.clone(), movie_grade);
+                        let movie = Movie::new(None, movie_title.clone(), movie_grade);
                         movies.insert(movie_title.clone(), movie);
                     }
 
@@ -72,6 +72,7 @@ impl HtmlParser {
 
     fn screenings(theater: Theater, movie_screening_times: Vec<String>, date: NaiveDate) -> Screening {
         Screening::new(
+            None,
             theater,
             date,
             movie_screening_times

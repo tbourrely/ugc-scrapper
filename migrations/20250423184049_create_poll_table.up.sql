@@ -7,9 +7,9 @@ CREATE TABLE polls
     created_at     timestamp default current_timestamp
 );
 
-CREATE TABLE movies_seen
+CREATE TABLE answers
 (
     id          uuid PRIMARY KEY,
     content     varchar,
-    created_at  timestamp
+    created_at  timestamp default current_timestamp
 )
