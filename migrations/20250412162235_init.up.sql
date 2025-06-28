@@ -20,7 +20,7 @@ CREATE TABLE screenings
     movie_id UUID,
     theater_id UUID,
     screenings_time JSON,
-    due_date TEXT,
+    due_date DATE,
     FOREIGN KEY (theater_id) REFERENCES theaters(id) ON DELETE CASCADE,
     FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE
 );

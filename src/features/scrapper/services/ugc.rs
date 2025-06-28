@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use chrono::{NaiveDate};
 use reqwest::Error;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, HOST, USER_AGENT};
-use crate::database::domain::{HtmlFromTheatersByDate, Theater};
+use crate::database::models::{Theater};
+use crate::features::scrapper::scrapper_domain::HtmlFromTheatersByDate;
 
 pub struct Ugc {}
 impl Ugc {
