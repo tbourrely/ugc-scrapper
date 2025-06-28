@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use sqlx::{Error, PgPool};
-use crate::database::repositories::movie::{init_movie_repository, MovieRepository};
+use crate::database::repositories::movie::{MovieRepository};
 use crate::features::discord::poll_domain::PollApiUpsertPayload;
 
 pub struct MoviesUseCases<'a> {
@@ -9,7 +9,7 @@ pub struct MoviesUseCases<'a> {
 impl MoviesUseCases<'_> {
     pub fn new(pool: &PgPool) -> MoviesUseCases {
         MoviesUseCases {
-            movie_repository: init_movie_repository(pool),
+            movie_repository: MovieRepository { pool }
         }
     }
 

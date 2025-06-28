@@ -23,19 +23,19 @@ pub async fn generate_poll_to_select_movies (db: &PgPool) -> Result<(), Error> {
 
     // get day(s) from poll
     let poll_api_use_case = PollApiUseCase::new();
-    let voted_days = match poll_api_use_case.get_days_from_poll_answers(poll.distant_id).await {
+    let desired_days = match poll_api_use_case.get_most_voted_answers_from_poll_answers(poll.distant_id).await {
         Ok(most_voted_answer) => most_voted_answer,
         Err(e) => return Err(Error::Reqwest(e))
     };
 
-    println!("{:?}", voted_days);
+    println!("{:?}", desired_days);
 
     // transform days to NaiveDate
     let dates;
-    if voted_days.is_empty() {
+    if desired_days.is_empty() {
         dates = dates::get_each_dates_of_current_week(None);
     } else {
-        dates = dates::get_date_from_day_name(voted_days)
+        dates = dates::get_date_from_day_name(desired_days)
             .unwrap_or_else(|_| dates::get_each_dates_of_current_week(None));
     }
 
@@ -59,9 +59,13 @@ pub async fn generate_poll_to_select_movies (db: &PgPool) -> Result<(), Error> {
 
     let poll = movie_use_case.generate_polls_for_movies(movies);
 
+    if poll.answers.len() == 0 {
+        println!("Il n'y a pas de nouveau film à voir.");
+        return Ok(())
+    }
     println!("{:?}", poll);
 
-    /*let poll_api_use_case = PollApiUseCase::new();
+    let poll_api_use_case = PollApiUseCase::new();
     let poll = match poll_api_use_case.initiate_poll_creation(poll, PollType::SelectMovie).await {
         Ok(poll) => poll,
         Err(e) => return Err(Error::Reqwest(e))
@@ -71,7 +75,7 @@ pub async fn generate_poll_to_select_movies (db: &PgPool) -> Result<(), Error> {
     match poll_repository.save(poll).await {
         Ok(poll) => poll,
         Err(e) => return Err(Error::Sqlx(e))
-    };*/
+    };
 
     Ok(())
 }

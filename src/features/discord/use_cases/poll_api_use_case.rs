@@ -31,7 +31,7 @@ impl PollApiUseCase {
     }
 
     pub async fn initiate_poll_creation(&self, poll: PollApiUpsertPayload, poll_type: PollType) -> Result<Poll, Error> {
-        let url = format!("{base_url}/polls/", base_url = self.base_url);
+        let url = format!("{base_url}/poll-groups", base_url = self.base_url);
 
         let client = reqwest::Client::new();
 
@@ -50,14 +50,12 @@ impl PollApiUseCase {
         Ok(domain_poll)
     }
 
-    pub async fn get_days_from_poll_answers(&self, poll_id: Uuid) -> Result<Vec<String>, Error> {
+    pub async fn get_most_voted_answers_from_poll_answers(&self, poll_id: Uuid) -> Result<Vec<String>, Error> {
         let url = format!(
-            "{base_url}/polls/{id}/instances/answers",
+            "{base_url}/poll-groups/{id}/instances/answers",
             base_url = self.base_url,
             id = poll_id
         );
-
-        println!("url: {}", url);
 
         let client = reqwest::Client::new();
         let response = match client.get(&url).headers(self.headers.clone()).send().await {
