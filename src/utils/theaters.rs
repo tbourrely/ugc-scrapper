@@ -1,4 +1,4 @@
-use crate::database::domain::Theater;
+use crate::database::models::Theater;
 
 const CONFLUENCE_THEATER: Theater = 36;
 const ASTORIA_THEATER: Theater = 33;
