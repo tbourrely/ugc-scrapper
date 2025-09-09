@@ -1,11 +1,8 @@
 services:
   api:
-    volumes:
-      - ./:/${DATABASE_NAME}
     build:
       context: .
       dockerfile: Dockerfile
-      target: api
     ports:
       - ${PORT_API}:3000
     environment:
