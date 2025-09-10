@@ -1,10 +1,8 @@
 services:
-  api:
+  scrapper:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - ${PORT_API}:3000
     environment:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_URL: ${DATABASE_URL}
@@ -12,10 +10,12 @@ services:
       DISCORD_GUILD: ${DISCORD_GUILD}
       DISCORD_CHANNEL: ${DISCORD_CHANNEL}
     depends_on:
-      - db
+      - scrapper-db
     profiles: [production]
+    networks:
+      - ugc-net
 
-  db:
+  scrapper-db:
     image: postgres:16
     restart: always
     ports:
@@ -27,6 +27,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     profiles: [production, dev]
+    networks:
+      - ugc-net
 
 volumes:
   pgdata:
+
+networks:
+  ugc-net:
+    driver: bridge
