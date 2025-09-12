@@ -1,4 +1,4 @@
-use crate::database::repositories::movie::MovieRepository;
+use crate::database::{models::Movie, repositories::movie::MovieRepository};
 use crate::features::discord::poll_domain::PollApiUpsertPayload;
 use chrono::NaiveDate;
 use sqlx::{Error, PgPool};
@@ -23,16 +23,16 @@ impl MoviesUseCases<'_> {
         return poll;
     }
 
-    pub async fn get_movie_titles(
+    pub async fn get_movies(
         &self,
         due_date: Vec<NaiveDate>,
         title_excluded: Vec<String>,
-    ) -> Result<Vec<String>, Error> {
+    ) -> Result<Vec<Movie>, Error> {
         let movies = self
             .movie_repository
             .retrieve_movies_for_specific_date(due_date, title_excluded)
             .await?;
 
-        Ok(movies.values().map(|m| m.title.clone()).collect())
+        Ok(movies.values().cloned().collect())
     }
 }
