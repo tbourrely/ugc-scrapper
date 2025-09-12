@@ -7,7 +7,7 @@ pub struct MoviesUseCases<'a> {
     movie_repository: MovieRepository<'a>,
 }
 impl MoviesUseCases<'_> {
-    pub fn new(pool: &PgPool) -> MoviesUseCases {
+    pub fn new(pool: &PgPool) -> MoviesUseCases<'_> {
         MoviesUseCases {
             movie_repository: MovieRepository { pool },
         }

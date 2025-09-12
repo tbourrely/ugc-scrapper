@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-use chrono::{NaiveDate};
-use sqlx::{Error, PgPool, Row};
-use sqlx::types::Json;
-use uuid::Uuid;
 use crate::database::models::{Movie, Screening, Theater};
 use crate::utils::theaters;
+use chrono::NaiveDate;
+use sqlx::types::Json;
+use sqlx::{Error, PgPool, Row};
+use std::collections::HashMap;
+use uuid::Uuid;
 
-pub fn init_movie_repository(pool: &PgPool) -> MovieRepository {
+pub fn init_movie_repository(pool: &PgPool) -> MovieRepository<'_> {
     MovieRepository { pool: &pool }
 }
 
@@ -15,16 +15,16 @@ pub struct MovieRepository<'a> {
 }
 
 impl<'a> MovieRepository<'a> {
-    async fn resolve_theater_id (&self) -> Result<HashMap<Theater, Uuid>, Error> {
+    async fn resolve_theater_id(&self) -> Result<HashMap<Theater, Uuid>, Error> {
         let mut theaters_uuid: HashMap<Theater, Uuid> = HashMap::new();
         let lyon_theaters = theaters::get_lyon_theaters();
 
         let rows = sqlx::query(
-            r#"SELECT id, ugc_identifier FROM theaters WHERE ugc_identifier = ANY($1)"#
+            r#"SELECT id, ugc_identifier FROM theaters WHERE ugc_identifier = ANY($1)"#,
         )
-            .bind(&lyon_theaters[..])
-            .fetch_all(self.pool)
-            .await?;
+        .bind(&lyon_theaters[..])
+        .fetch_all(self.pool)
+        .await?;
 
         for row in rows {
             theaters_uuid.insert(row.get(1), row.get(0));
@@ -33,12 +33,13 @@ impl<'a> MovieRepository<'a> {
         Ok(theaters_uuid)
     }
 
-    pub async fn get_existing_movies_by_titles(&self, movie_titles: Vec<String>) -> Result<HashMap<String, Uuid>, Error> {
+    pub async fn get_existing_movies_by_titles(
+        &self,
+        movie_titles: Vec<String>,
+    ) -> Result<HashMap<String, Uuid>, Error> {
         let mut movie_uuid_by_title: HashMap<String, Uuid> = HashMap::new();
 
-        let rows = sqlx::query(
-            r#"SELECT id, title FROM movies WHERE title = ANY($1)"#
-        )
+        let rows = sqlx::query(r#"SELECT id, title FROM movies WHERE title = ANY($1)"#)
             .bind(&movie_titles[..])
             .fetch_all(self.pool)
             .await?;
@@ -84,7 +85,8 @@ impl<'a> MovieRepository<'a> {
                     screening_movie_ids.push(&movie.id);
                 }
 
-                screening_theater_ids.push(*theater_hash_map.get((&screening.theater).into()).unwrap());
+                screening_theater_ids
+                    .push(*theater_hash_map.get((&screening.theater).into()).unwrap());
                 screening_due_dates.push(screening.due_date);
                 screening_hours.push(serde_json::to_string(&screening.hours).unwrap());
             }
@@ -106,20 +108,24 @@ impl<'a> MovieRepository<'a> {
             "
                 INSERT INTO screenings(id, movie_id, theater_id, screenings_time, due_date)
                 SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::uuid[], $4::json[], $5::date[])
-            "
+            ",
         )
-            .bind(&screening_ids[..])
-            .bind(&screening_movie_ids[..])
-            .bind(&screening_theater_ids[..])
-            .bind(&screening_hours[..])
-            .bind(&screening_due_dates[..])
-            .execute(self.pool)
-            .await?;
+        .bind(&screening_ids[..])
+        .bind(&screening_movie_ids[..])
+        .bind(&screening_theater_ids[..])
+        .bind(&screening_hours[..])
+        .bind(&screening_due_dates[..])
+        .execute(self.pool)
+        .await?;
 
         Ok(movies)
     }
 
-    pub async fn retrieve_movies_for_specific_date(&self, due_date: Vec<NaiveDate>, title_excluded: Vec<String>) -> Result<HashMap<String, Movie>, Error> {
+    pub async fn retrieve_movies_for_specific_date(
+        &self,
+        due_date: Vec<NaiveDate>,
+        title_excluded: Vec<String>,
+    ) -> Result<HashMap<String, Movie>, Error> {
         let rows = sqlx::query(
             "
                 SELECT
@@ -137,10 +143,10 @@ impl<'a> MovieRepository<'a> {
                 WHERE title != ALL($2)
             ",
         )
-            .bind(&due_date[..])
-            .bind(&title_excluded[..])
-            .fetch_all(self.pool)
-            .await?;
+        .bind(&due_date[..])
+        .bind(&title_excluded[..])
+        .fetch_all(self.pool)
+        .await?;
 
         let mut movies: HashMap<String, Movie> = HashMap::new();
         for row in rows {
@@ -150,21 +156,19 @@ impl<'a> MovieRepository<'a> {
                 let movie = Movie::new(
                     Some(row.get::<Uuid, usize>(0)),
                     row.get::<String, usize>(1),
-                    row.get::<f32, usize>(2)
+                    row.get::<f32, usize>(2),
                 );
                 movies.insert(row.get::<String, usize>(1), movie);
             }
 
             let movie = movies.get_mut(&movie_title).unwrap();
             let hours: Vec<String> = row.get::<Json<Vec<String>>, usize>(6).to_vec();
-            movie.screenings.push(
-                Screening::new(
-                    Some(row.get::<Uuid, usize>(3)),
-                    row.get::<Theater, usize>(5),
-                    row.get::<NaiveDate, usize>(7),
-                    hours
-                )
-            );
+            movie.screenings.push(Screening::new(
+                Some(row.get::<Uuid, usize>(3)),
+                row.get::<Theater, usize>(5),
+                row.get::<NaiveDate, usize>(7),
+                hours,
+            ));
         }
 
         Ok(movies)
