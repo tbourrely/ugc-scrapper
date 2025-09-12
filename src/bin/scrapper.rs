@@ -1,5 +1,5 @@
-use std::process::ExitCode;
 use dotenv::dotenv;
+use std::process::ExitCode;
 use ugc_scrapper::database::init_db::init_db;
 use ugc_scrapper::features::scrapper::scrapper;
 
@@ -10,7 +10,7 @@ async fn main() -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             println!("An error occurred while trying to init db: {e:?}");
-            return ExitCode::from(ExitCode::FAILURE);
+            return ExitCode::FAILURE;
         }
     };
 
@@ -18,10 +18,9 @@ async fn main() -> ExitCode {
         Ok(movies) => movies,
         Err(e) => {
             println!("Failed to retrieve movies: {e:?}");
-            return ExitCode::from(ExitCode::FAILURE);
+            return ExitCode::FAILURE;
         }
     };
 
-    ExitCode::from(ExitCode::SUCCESS)
+    ExitCode::SUCCESS
 }
-

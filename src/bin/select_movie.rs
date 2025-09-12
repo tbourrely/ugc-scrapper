@@ -1,5 +1,5 @@
-use std::process::ExitCode;
 use dotenv::dotenv;
+use std::process::ExitCode;
 use ugc_scrapper::database::init_db::init_db;
 use ugc_scrapper::features::discord::select_movies;
 
@@ -10,7 +10,7 @@ async fn main() -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             println!("An error occurred while trying to init db: {e:?}");
-            return ExitCode::from(ExitCode::FAILURE);
+            return ExitCode::FAILURE;
         }
     };
 
@@ -18,9 +18,10 @@ async fn main() -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             println!("Failed to generate poll to select movies: {e:?}");
-            return ExitCode::from(ExitCode::FAILURE);
+            return ExitCode::FAILURE;
         }
     };
 
-    ExitCode::from(ExitCode::SUCCESS)
+    ExitCode::SUCCESS
 }
+
