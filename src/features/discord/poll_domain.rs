@@ -28,7 +28,7 @@ impl PollApiUpsertPayload {
             multiselect: true,
             guild: discord_guild,
             channel: discord_channel,
-            duration: 86400,
+            duration: 86400, // 24 hours
             onetime: false,
         }
     }

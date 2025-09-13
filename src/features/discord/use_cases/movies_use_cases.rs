@@ -15,7 +15,7 @@ impl MoviesUseCases<'_> {
 
     pub fn generate_polls_for_movies(&self, movies: Vec<String>) -> PollApiUpsertPayload {
         let mut poll = PollApiUpsertPayload::new(
-            String::from("30 18 * * 1"),
+            String::from("00 09 * * 2"),
             String::from("Quel film ?"),
             movies,
         );
