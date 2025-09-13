@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     environment:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_URL: ${DATABASE_URL}
