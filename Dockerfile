@@ -13,4 +13,4 @@ COPY --from=builder /usr/local/cargo/bin/select_day /usr/local/bin/select_day
 COPY --from=builder /usr/local/cargo/bin/select_movie /usr/local/bin/select_movie
 ADD crontab .
 RUN crontab -u root ./crontab
-CMD [ "cron", "-f" ]
+CMD [ "printenv", ">", "/etc/environment", "&&", "cron", "-f" ]
