@@ -136,7 +136,7 @@ impl<'a> MovieRepository<'a> {
                     s.movie_id,
                     t.ugc_identifier,
                     s.screenings_time,
-                    s.due_date,
+                    s.due_date
                 FROM movies m
                 INNER JOIN screenings s ON s.movie_id = m.id AND s.due_date = ANY ($1)
                 LEFT JOIN theaters t ON t.id = s.theater_id
