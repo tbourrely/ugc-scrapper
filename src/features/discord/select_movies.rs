@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::database::models::{Movie, PollType};
 use crate::database::repositories::answer::init_answer_repository;
 use crate::database::repositories::poll::init_poll_repository;
@@ -14,7 +16,7 @@ fn filter_movies_based_on_screenings(movies: Vec<Movie>) -> Vec<Movie> {
         .into_iter()
         .filter(|movie| {
             for screening in &movie.screenings {
-                for hour in &screening.hours {
+                for hour in screening.hours.keys() {
                     if let Ok(parsed_time) = NaiveTime::parse_from_str(hour, "%H:%M")
                         && parsed_time.hour() >= 19
                     {
@@ -25,6 +27,23 @@ fn filter_movies_based_on_screenings(movies: Vec<Movie>) -> Vec<Movie> {
             false
         })
         .collect()
+}
+
+fn generate_answers(movies: Vec<Movie>) -> Vec<String> {
+    let mut movies_answers: Vec<String> = Vec::new();
+    for movie in &movies {
+        // use a HashSet to collect unique languages
+        let mut languages: HashSet<String> = HashSet::new();
+        for screening in &movie.screenings {
+            for lang in screening.hours.values() {
+                languages.insert(lang.clone());
+            }
+        }
+        let languages_str = languages.into_iter().collect::<Vec<String>>().join(", ");
+        let movie_title_with_lang = format!("{} ({})", movie.title, languages_str);
+        movies_answers.push(movie_title_with_lang);
+    }
+    movies_answers
 }
 
 pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
@@ -87,9 +106,7 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
     };
 
     movies = filter_movies_based_on_screenings(movies);
-
-    let poll =
-        movie_use_case.generate_polls_for_movies(movies.iter().map(|m| m.title.clone()).collect());
+    let poll = movie_use_case.generate_polls_for_movies(generate_answers(movies));
 
     if poll.answers.is_empty() {
         println!("Il n'y a pas de nouveau film à voir.");
@@ -117,6 +134,8 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use chrono::NaiveDate;
     use uuid::Uuid;
 
@@ -133,7 +152,10 @@ mod tests {
                 None,
                 1,
                 NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                vec!["10:00".to_string(), "14:00".to_string()],
+                HashMap::from([
+                    ("10:00".to_string(), "VF".to_string()),
+                    ("14:00".to_string(), "VF".to_string()),
+                ]),
             )],
         }];
         let filtered = filter_movies_based_on_screenings(movies.clone());
@@ -150,7 +172,10 @@ mod tests {
                 None,
                 1,
                 NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                vec!["10:00".to_string(), "19:00".to_string()],
+                HashMap::from([
+                    ("10:00".to_string(), "VF".to_string()),
+                    ("19:00".to_string(), "VF".to_string()),
+                ]),
             )],
         }];
         let filtered = filter_movies_based_on_screenings(movies.clone());
@@ -168,7 +193,10 @@ mod tests {
                     None,
                     1,
                     NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                    vec!["10:00".to_string(), "18:59".to_string()],
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("18:59".to_string(), "VF".to_string()),
+                    ]),
                 )],
             },
             Movie {
@@ -179,11 +207,79 @@ mod tests {
                     None,
                     1,
                     NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                    vec!["10:00".to_string(), "19:00".to_string()],
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("19:00".to_string(), "VF".to_string()),
+                    ]),
                 )],
             },
         ];
         let filtered = filter_movies_based_on_screenings(movies.clone());
         assert_eq!(1, filtered.len(), "One movie should be kept");
+    }
+
+    #[test]
+    fn test_generate_answers() {
+        let movies = vec![
+            Movie {
+                id: Uuid::new_v4(),
+                title: "Movie 1".to_string(),
+                grade: 1.0,
+                screenings: vec![Screening::new(
+                    None,
+                    1,
+                    NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("18:59".to_string(), "VO".to_string()),
+                    ]),
+                )],
+            },
+            Movie {
+                id: Uuid::new_v4(),
+                title: "Movie 2".to_string(),
+                grade: 1.0,
+                screenings: vec![Screening::new(
+                    None,
+                    1,
+                    NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("19:00".to_string(), "VF".to_string()),
+                    ]),
+                )],
+            },
+        ];
+        let answers = generate_answers(movies);
+        assert_eq!(2, answers.len(), "There should be two answers");
+
+        // movie 1 has VF and VO
+        // values must be extracted from the string
+        // because the order of languages is not guaranteed
+        let languages_movie_1: Vec<&str> = answers[0]
+            .strip_prefix("Movie 1 (")
+            .unwrap()
+            .strip_suffix(")")
+            .unwrap()
+            .split(", ")
+            .collect();
+        assert_eq!(
+            2,
+            languages_movie_1.len(),
+            "Movie 1 should have two languages"
+        );
+        assert!(
+            languages_movie_1.contains(&"VF"),
+            "Movie 1 should have VF language"
+        );
+        assert!(
+            languages_movie_1.contains(&"VO"),
+            "Movie 1 should have VF language"
+        );
+        // movie 2 only has VF
+        assert!(
+            answers.contains(&"Movie 2 (VF)".to_string()),
+            "Answer for Movie 2 is incorrect"
+        );
     }
 }

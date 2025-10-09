@@ -162,7 +162,8 @@ impl<'a> MovieRepository<'a> {
             }
 
             let movie = movies.get_mut(&movie_title).unwrap();
-            let hours: Vec<String> = row.get::<Json<Vec<String>>, usize>(6).to_vec();
+            let hours: HashMap<String, String> =
+                row.get::<Json<HashMap<String, String>>, usize>(6).0;
             movie.screenings.push(Screening::new(
                 Some(row.get::<Uuid, usize>(3)),
                 row.get::<Theater, usize>(5),
