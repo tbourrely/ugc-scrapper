@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -7,7 +9,7 @@ pub type Theater = i16;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PollType {
     SelectDay = 0,
-    SelectMovie = 1
+    SelectMovie = 1,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -64,11 +66,16 @@ pub struct Screening {
     pub id: Uuid,
     pub theater: Theater,
     pub due_date: NaiveDate,
-    pub hours: Vec<String>
+    pub hours: HashMap<String, String>,
 }
 
 impl Screening {
-    pub fn new(id: Option<Uuid>, theater: Theater, due_date: NaiveDate, hours: Vec<String>) -> Self {
+    pub fn new(
+        id: Option<Uuid>,
+        theater: Theater,
+        due_date: NaiveDate,
+        hours: HashMap<String, String>,
+    ) -> Self {
         let uuid: Uuid;
         if id.is_none() {
             uuid = Uuid::new_v4();
@@ -79,7 +86,7 @@ impl Screening {
             id: uuid,
             theater,
             due_date,
-            hours
+            hours,
         }
     }
 }
@@ -102,7 +109,8 @@ impl MoviesSeen {
         MoviesSeen {
             id: uuid,
             content,
-            created_at
+            created_at,
         }
     }
 }
+

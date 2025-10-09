@@ -14,7 +14,7 @@ fn filter_movies_based_on_screenings(movies: Vec<Movie>) -> Vec<Movie> {
         .into_iter()
         .filter(|movie| {
             for screening in &movie.screenings {
-                for hour in &screening.hours {
+                for hour in screening.hours.keys() {
                     if let Ok(parsed_time) = NaiveTime::parse_from_str(hour, "%H:%M")
                         && parsed_time.hour() >= 19
                     {
@@ -117,6 +117,8 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use chrono::NaiveDate;
     use uuid::Uuid;
 
@@ -133,7 +135,10 @@ mod tests {
                 None,
                 1,
                 NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                vec!["10:00".to_string(), "14:00".to_string()],
+                HashMap::from([
+                    ("10:00".to_string(), "VF".to_string()),
+                    ("14:00".to_string(), "VF".to_string()),
+                ]),
             )],
         }];
         let filtered = filter_movies_based_on_screenings(movies.clone());
@@ -150,7 +155,10 @@ mod tests {
                 None,
                 1,
                 NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                vec!["10:00".to_string(), "19:00".to_string()],
+                HashMap::from([
+                    ("10:00".to_string(), "VF".to_string()),
+                    ("19:00".to_string(), "VF".to_string()),
+                ]),
             )],
         }];
         let filtered = filter_movies_based_on_screenings(movies.clone());
@@ -168,7 +176,10 @@ mod tests {
                     None,
                     1,
                     NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                    vec!["10:00".to_string(), "18:59".to_string()],
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("18:59".to_string(), "VF".to_string()),
+                    ]),
                 )],
             },
             Movie {
@@ -179,7 +190,10 @@ mod tests {
                     None,
                     1,
                     NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
-                    vec!["10:00".to_string(), "19:00".to_string()],
+                    HashMap::from([
+                        ("10:00".to_string(), "VF".to_string()),
+                        ("19:00".to_string(), "VF".to_string()),
+                    ]),
                 )],
             },
         ];

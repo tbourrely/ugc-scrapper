@@ -136,7 +136,7 @@ impl<'a> MovieRepository<'a> {
                     s.movie_id,
                     t.ugc_identifier,
                     s.screenings_time,
-                    s.due_date
+                    s.due_date,
                 FROM movies m
                 INNER JOIN screenings s ON s.movie_id = m.id AND s.due_date = ANY ($1)
                 LEFT JOIN theaters t ON t.id = s.theater_id
@@ -162,7 +162,8 @@ impl<'a> MovieRepository<'a> {
             }
 
             let movie = movies.get_mut(&movie_title).unwrap();
-            let hours: Vec<String> = row.get::<Json<Vec<String>>, usize>(6).to_vec();
+            let hours: HashMap<String, String> =
+                row.get::<Json<HashMap<String, String>>, usize>(6).0;
             movie.screenings.push(Screening::new(
                 Some(row.get::<Uuid, usize>(3)),
                 row.get::<Theater, usize>(5),
