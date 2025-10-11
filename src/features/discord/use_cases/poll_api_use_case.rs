@@ -36,7 +36,7 @@ impl PollApiUseCase {
         poll: PollApiUpsertPayload,
         poll_type: PollType,
     ) -> Result<Poll, Error> {
-        let url = format!("{base_url}/poll-groups", base_url = self.base_url);
+        let url = format!("{base_url}/polls", base_url = self.base_url);
 
         let client = reqwest::Client::new();
 
@@ -66,7 +66,7 @@ impl PollApiUseCase {
         poll_id: Uuid,
     ) -> Result<Vec<String>, Error> {
         let url = format!(
-            "{base_url}/poll-groups/{id}/instances/answers",
+            "{base_url}/polls/{id}/instances/answers",
             base_url = self.base_url,
             id = poll_id
         );
