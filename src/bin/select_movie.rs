@@ -24,4 +24,3 @@ async fn main() -> ExitCode {
 
     ExitCode::SUCCESS
 }
-
