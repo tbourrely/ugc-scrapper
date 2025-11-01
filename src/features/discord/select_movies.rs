@@ -4,6 +4,7 @@ use crate::database::models::{Movie, PollType};
 use crate::database::repositories::answer::init_answer_repository;
 use crate::database::repositories::poll::init_poll_repository;
 use crate::errors::Error;
+use crate::features::discord::constants::ANSWER_MAX_LENGTH;
 use crate::features::discord::use_cases::movies_use_cases::MoviesUseCases;
 use crate::features::discord::use_cases::poll_api_use_case::PollApiUseCase;
 use crate::utils::dates;
@@ -40,10 +41,22 @@ fn generate_answers(movies: Vec<Movie>) -> Vec<String> {
             }
         }
         let languages_str = languages.into_iter().collect::<Vec<String>>().join(", ");
-        let movie_title_with_lang = format!("{} ({})", movie.title, languages_str);
+        let language_str_len = languages_str.len();
+        let movie_title_trimmed = trim(&movie.title, ANSWER_MAX_LENGTH - language_str_len - 3); // 3 for " ()"
+        let movie_title_with_lang = format!("{} ({})", movie_title_trimmed, languages_str);
         movies_answers.push(movie_title_with_lang);
     }
     movies_answers
+}
+
+fn trim(text: &str, max_len: usize) -> String {
+    if text.len() <= max_len {
+        text.to_string()
+    } else {
+        let mut trimmed = text[..max_len - 3].to_string();
+        trimmed.push_str("...");
+        trimmed
+    }
 }
 
 pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
@@ -250,8 +263,9 @@ mod tests {
                 )],
             },
         ];
+        let movies_len = movies.len();
         let answers = generate_answers(movies);
-        assert_eq!(2, answers.len(), "There should be two answers");
+        assert_eq!(movies_len, answers.len(), "There should be two answers");
 
         // movie 1 has VF and VO
         // values must be extracted from the string
@@ -280,6 +294,23 @@ mod tests {
         assert!(
             answers.contains(&"Movie 2 (VF)".to_string()),
             "Answer for Movie 2 is incorrect"
+        );
+    }
+
+    #[test]
+    fn test_trim() {
+        let long_title = "DEMON SLAYER: KIMETSU NO YAIBA LA FORTERESSE INFINIE";
+        let trimmed = trim(long_title, 35);
+        assert_eq!(
+            "DEMON SLAYER: KIMETSU NO YAIBA L...", trimmed,
+            "Title should be trimmed correctly"
+        );
+
+        let short_title = "Short Title";
+        let not_trimmed = trim(short_title, 30);
+        assert_eq!(
+            short_title, not_trimmed,
+            "Short title should not be trimmed"
         );
     }
 }
