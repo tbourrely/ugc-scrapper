@@ -23,11 +23,6 @@ impl Ugc {
                     };
 
                 html_by_date.insert(date.to_string(), html_page);
-                debug!(
-                    "Retrieved html for theater : {} and date {}",
-                    theater,
-                    date.to_string()
-                );
             }
             theaters_html_pages_by_dates.insert(*theater, html_by_date);
         }
@@ -63,6 +58,31 @@ impl Ugc {
             Ok(response) => response,
             Err(reqwest_error) => return Err(reqwest_error),
         };
+
+        debug!(
+            "Request sent to url : {} for theater : {} and date {}, awaiting response",
+            url,
+            theater,
+            date.to_string()
+        );
+
+        let status = response.status();
+        if !status.is_success() {
+            debug!(
+                "Received non-success status code {} for url : {} for theater : {} and date {}",
+                status,
+                url,
+                theater,
+                date.to_string()
+            );
+        } else {
+            debug!(
+                "Received successful response for url : {} for theater : {} and date {}",
+                url,
+                theater,
+                date.to_string()
+            );
+        }
 
         let response_content = match response.text().await {
             Ok(response_content) => response_content,
