@@ -21,7 +21,7 @@ impl HtmlParser {
 
                 let movie_blocks_selector = Selector::parse(".component--cinema-list-item")?;
                 let title_blocks_selector = Selector::parse(".block--title > a")?;
-                let screening_time_blocks_selector = Selector::parse(".screening-start")?;
+                let screening_time_blocks_selector = Selector::parse(".screening-time-start")?;
                 let screening_language_blocks_selector = Selector::parse(".screening-lang")?;
                 let screening_block_selector = Selector::parse("[data-filmid]")?;
                 let grade_blocks_selector = Selector::parse(".notes > h1")?;
@@ -36,7 +36,10 @@ impl HtmlParser {
                         };
 
                     if movie_title.is_empty() {
+                        debug!("Movie title not found, skipping movie block");
                         continue;
+                    } else {
+                        debug!("Movie title : {}", movie_title);
                     }
 
                     let mut movie_screening_times: HashMap<String, String> = HashMap::new();
@@ -46,21 +49,32 @@ impl HtmlParser {
                                 Some(time) => {
                                     String::from(time.text().collect::<Vec<_>>().join("").trim())
                                 }
-                                None => continue,
-                            };
-                        let screening_language =
-                            match screening.select(&screening_language_blocks_selector).next() {
-                                Some(lang) => {
-                                    String::from(lang.text().collect::<Vec<_>>().join("").trim())
+                                None => {
+                                    debug!("Screening time not found, skipping screening block");
+                                    continue;
                                 }
-                                None => continue,
                             };
+                        let screening_language = match screening
+                            .select(&screening_language_blocks_selector)
+                            .next()
+                        {
+                            Some(lang) => {
+                                String::from(lang.text().collect::<Vec<_>>().join("").trim())
+                            }
+                            None => {
+                                debug!("Screening language not found, skipping screening block");
+                                continue;
+                            }
+                        };
 
                         movie_screening_times
                             .insert(screening_time.clone(), screening_language.clone());
                     }
 
                     if movie_screening_times.is_empty() {
+                        debug!(
+                            "No screening times found for movie {movie_title}, skipping movie block"
+                        );
                         continue;
                     }
 
@@ -72,7 +86,10 @@ impl HtmlParser {
                             .replace(",", ".")
                             .parse::<f32>()
                             .unwrap_or_else(|_e| 0.0),
-                        None => 0.0,
+                        None => {
+                            debug!("Movie grade not found, setting grade to 0.0");
+                            0.0
+                        }
                     };
 
                     if !movies.contains_key(&movie_title) {
@@ -81,7 +98,6 @@ impl HtmlParser {
                     }
 
                     let movie = movies.get_mut(&movie_title).unwrap();
-                    debug!("Movie: {:?}", movie.title);
                     movie
                         .screenings
                         .push(Self::screening(*theater, movie_screening_times, date));
