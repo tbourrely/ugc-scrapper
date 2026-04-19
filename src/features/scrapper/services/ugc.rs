@@ -1,6 +1,7 @@
 use crate::database::models::Theater;
 use crate::features::scrapper::scrapper_domain::HtmlFromTheatersByDate;
 use chrono::NaiveDate;
+use log::debug;
 use reqwest::Error;
 use reqwest::header::{ACCEPT, ACCEPT_LANGUAGE, HOST, HeaderMap, HeaderValue, USER_AGENT};
 use std::collections::HashMap;
@@ -22,7 +23,7 @@ impl Ugc {
                     };
 
                 html_by_date.insert(date.to_string(), html_page);
-                println!(
+                debug!(
                     "Retrieved html for theater : {} and date {}",
                     theater,
                     date.to_string()

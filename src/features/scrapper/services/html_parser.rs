@@ -1,6 +1,7 @@
 use crate::database::models::{Movie, Screening, Theater};
 use crate::features::scrapper::scrapper_domain::HtmlFromTheatersByDate;
 use chrono::NaiveDate;
+use log::debug;
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
 use std::collections::HashMap;
@@ -80,7 +81,7 @@ impl HtmlParser {
                     }
 
                     let movie = movies.get_mut(&movie_title).unwrap();
-                    println!("Movie: {:?}", movie.title);
+                    debug!("Movie: {:?}", movie.title);
                     movie
                         .screenings
                         .push(Self::screening(*theater, movie_screening_times, date));
@@ -95,7 +96,7 @@ impl HtmlParser {
         movie_screening_times: HashMap<String, String>,
         date: NaiveDate,
     ) -> Screening {
-        println!(
+        debug!(
             "Theater: {:?}, Date: {}, Times: {:?}",
             theater, date, movie_screening_times
         );

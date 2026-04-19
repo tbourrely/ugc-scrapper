@@ -9,6 +9,7 @@ use crate::features::discord::use_cases::movies_use_cases::MoviesUseCases;
 use crate::features::discord::use_cases::poll_api_use_case::PollApiUseCase;
 use crate::utils::dates;
 use chrono::{NaiveTime, Timelike};
+use log::debug;
 use sqlx::PgPool;
 
 // filters out movies that only have screenings before 19:00
@@ -83,7 +84,7 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
         Err(e) => return Err(Error::Reqwest(e)),
     };
 
-    println!("{:?}", desired_days);
+    debug!("desired_days : {:?}", desired_days);
 
     // transform days to NaiveDate
     let dates;
@@ -94,7 +95,7 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
             .unwrap_or_else(|_| dates::get_each_dates_of_current_week(None));
     }
 
-    println!("{:?}", dates);
+    debug!("dates : {:?}", dates);
 
     // retrieve movies seen since in the last two month
     let answer_repository = init_answer_repository(db);
@@ -103,7 +104,7 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
         Err(e) => return Err(Error::Sqlx(e)),
     };
 
-    println!("MOVIES SEEN : {:?}", movies_seen);
+    debug!("MOVIES SEEN : {:?}", movies_seen);
 
     // retrieve all movies titles which have screenings on specified dates without movies seen
     let movie_use_case = MoviesUseCases::new(db);
@@ -122,10 +123,10 @@ pub async fn generate_poll_to_select_movies(db: &PgPool) -> Result<(), Error> {
     let poll = movie_use_case.generate_polls_for_movies(generate_answers(movies));
 
     if poll.answers.is_empty() {
-        println!("Il n'y a pas de nouveau film à voir.");
-        return Ok(());
+        debug!("No movies to create polls for");
+        return Err(Error::Other("No movies to create polls for".to_string()));
     }
-    println!("{:?}", poll);
+    debug!("poll : {:?}", poll);
 
     let poll_api_use_case = PollApiUseCase::new();
     let poll = match poll_api_use_case

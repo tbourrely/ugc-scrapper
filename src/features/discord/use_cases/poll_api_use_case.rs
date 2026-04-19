@@ -1,5 +1,6 @@
 use crate::database::models::{Poll, PollType};
 use crate::features::discord::poll_domain::PollApiUpsertPayload;
+use log::debug;
 use reqwest::Error;
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue};
 use serde::Deserialize;
@@ -82,7 +83,7 @@ impl PollApiUseCase {
             Err(reqwest_error) => return Err(reqwest_error),
         };
 
-        println!("{:#?}", answers);
+        debug!("answers : {:#?}", answers);
 
         let mut most_voted_answers: Vec<String> = Vec::new();
         let answer_with_most_vote = answers

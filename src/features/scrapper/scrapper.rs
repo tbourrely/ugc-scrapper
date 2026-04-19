@@ -5,6 +5,7 @@ use crate::features::scrapper::services::html_parser::HtmlParser;
 use crate::features::scrapper::services::ugc::Ugc;
 use crate::utils::{dates, theaters};
 use chrono::NaiveDate;
+use log::debug;
 use sqlx::PgPool;
 
 pub async fn retrieve_movies_from_ugc(db: &PgPool) -> Result<(), Error> {
@@ -15,15 +16,19 @@ pub async fn retrieve_movies_from_ugc(db: &PgPool) -> Result<(), Error> {
         Ok(html) => html,
         Err(e) => return Err(Error::Reqwest(e)),
     };
+    debug!("Successfully retrieved html from each theater on ugc web site");
 
-    println!("Successfully retrieved html from each theater on ugc web site");
-
+    debug!("HTML parsing starting");
     let movies = match HtmlParser::get_movies_from_html(&html_from_theaters) {
         Ok(movies) => movies,
         Err(e) => return Err(Error::Scrapper(e)),
     };
+    debug!("Found {:?} movies", movies.len());
+    debug!("HTML parsing done");
 
-    println!("HTML parsing, OK !");
+    if movies.len() == 0 {
+        return Err(Error::Other("No movies found".to_string()));
+    }
 
     let movie_repo = init_movie_repository(db);
     match movie_repo.save(movies).await {
@@ -31,7 +36,7 @@ pub async fn retrieve_movies_from_ugc(db: &PgPool) -> Result<(), Error> {
         Err(e) => return Err(Error::Sqlx(e)),
     };
 
-    println!("Successfully saved movies !");
+    debug!("Successfully saved movies !");
 
     Ok(())
 }
