@@ -10,6 +10,7 @@ services:
       DISCORD_API_BASE_URL: ${DISCORD_API_BASE_URL}
       DISCORD_GUILD: ${DISCORD_GUILD}
       DISCORD_CHANNEL: ${DISCORD_CHANNEL}
+      RUST_LOG: ugc_scrapper=debug
     depends_on:
       - scrapper-db
     profiles: [production]
